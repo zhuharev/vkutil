@@ -20,7 +20,7 @@ func NewUtils(api *vk.Api) *Api {
 	return &Api{vkApi: api}
 }
 
-func (api *Api) GroupsGetAllMembers(groupId int) ([]int, error) {
+/*func (api *Api) GroupsGetAllMembers(groupId int) ([]int, error) {
 	var result []int
 	count, err := api.GroupsGetMembersCount(groupId)
 	if err != nil {
@@ -42,7 +42,7 @@ func (api *Api) GroupsGetAllMembers(groupId int) ([]int, error) {
 		result = append(result, ids...)
 	}
 	return result, nil
-}
+}*/
 
 func (api *Api) GroupsGetMembersCount(groupId int) (int, error) {
 	resp, err := api.vkApi.Request(vk.METHOD_GROUPS_GET_MEMBERS, map[string][]string{
