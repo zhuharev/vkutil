@@ -9,17 +9,17 @@ import (
 	"strings"
 )
 
-func (api *Api) FriendsGet(args ...url.Values) ([]int, error) {
+func (api *Api) FriendsGet(args ...url.Values) ([]int, int, error) {
 	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var r ResponseIds
 	err = json.Unmarshal(resp, &r)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return r.Resp.Items, nil
+	return r.Resp.Items, r.Resp.Count, nil
 }
 
 func (api *Api) FriendsGetRequests(args ...url.Values) ([]int, error) {
@@ -36,7 +36,7 @@ func (api *Api) FriendsGetRequests(args ...url.Values) ([]int, error) {
 }
 
 func (api *Api) FriendsGetAllFollowers() ([]int, error) {
-	ids, err := api.FriendsGet()
+	ids, _, err := api.FriendsGet()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ return b;`
 		fmt.Println(string(resp))
 		return nil, err
 	}
-	ids, err := api.FriendsGet()
+	ids, _, err := api.FriendsGet()
 	if err != nil {
 		return nil, err
 	}
@@ -147,9 +147,30 @@ func (api *Api) FriendsGetMutual(sourceId int, targetUids []int, args ...url.Val
 
 //utils
 
+func (api *Api) UtilsFriendsGetOne(userId int) (friends []int, total int, e error) {
+	vals := url.Values{
+		"user_id": {fmt.Sprint(userId)},
+		"count":   {"5000"},
+	}
+	friends, total, e = api.FriendsGet(vals)
+	if e != nil {
+		return
+	}
+	if total > 5000 {
+		vals.Set("offset", "5000")
+	}
+	f, _, e := api.FriendsGet(vals)
+	if e != nil {
+		return
+	}
+	friends = append(friends, f...)
+
+	return
+}
+
 //todo handle it execute
 func (api *Api) UtilsFriendsOfFriends(targetId int) (friendsOfFriends []int, err error) {
-	friends, err := api.FriendsGet(url.Values{"user_id": {
+	friends, _, err := api.FriendsGet(url.Values{"user_id": {
 		fmt.Sprint(targetId),
 	}})
 	if err != nil {
