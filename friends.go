@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (api *Api) FriendsGet(args ...url.Values) ([]int, int, error) {
+func (api *Api) FriendsGetIds(args ...url.Values) ([]int, int, error) {
 	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET, args...)
 	if err != nil {
 		return nil, 0, err
@@ -20,6 +20,27 @@ func (api *Api) FriendsGet(args ...url.Values) ([]int, int, error) {
 		return nil, 0, err
 	}
 	return r.Resp.Items, r.Resp.Count, nil
+}
+
+func (api *Api) FriendsGet(args ...url.Values) ([]User, int, error) {
+	arg := url.Values{"fields": {"id"}}
+	if len(args) > 0 {
+		arg = args[0]
+		if arg.Get("fields") == "" {
+			arg.Set("fields", "id")
+		}
+	}
+
+	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET, arg)
+	if err != nil {
+		return nil, 0, err
+	}
+	var r ResponseUserWithCount
+	err = json.Unmarshal(resp, &r)
+	if err != nil {
+		return nil, 0, err
+	}
+	return r.Response.Items, r.Response.Count, nil
 }
 
 func (api *Api) FriendsGetRequests(args ...url.Values) ([]int, error) {
@@ -36,7 +57,7 @@ func (api *Api) FriendsGetRequests(args ...url.Values) ([]int, error) {
 }
 
 func (api *Api) FriendsGetAllFollowers() ([]int, error) {
-	ids, _, err := api.FriendsGet()
+	ids, _, err := api.FriendsGetIds()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +87,7 @@ return b;`
 		fmt.Println(string(resp))
 		return nil, err
 	}
-	ids, _, err := api.FriendsGet()
+	ids, _, err := api.FriendsGetIds()
 	if err != nil {
 		return nil, err
 	}
@@ -152,14 +173,14 @@ func (api *Api) UtilsFriendsGetOne(userId int) (friends []int, total int, e erro
 		"user_id": {fmt.Sprint(userId)},
 		"count":   {"5000"},
 	}
-	friends, total, e = api.FriendsGet(vals)
+	friends, total, e = api.FriendsGetIds(vals)
 	if e != nil {
 		return
 	}
 	if total > 5000 {
 		vals.Set("offset", "5000")
 	}
-	f, _, e := api.FriendsGet(vals)
+	f, _, e := api.FriendsGetIds(vals)
 	if e != nil {
 		return
 	}
@@ -170,7 +191,7 @@ func (api *Api) UtilsFriendsGetOne(userId int) (friends []int, total int, e erro
 
 //todo handle it execute
 func (api *Api) UtilsFriendsOfFriends(targetId int) (friendsOfFriends []int, err error) {
-	friends, _, err := api.FriendsGet(url.Values{"user_id": {
+	friends, _, err := api.FriendsGetIds(url.Values{"user_id": {
 		fmt.Sprint(targetId),
 	}})
 	if err != nil {

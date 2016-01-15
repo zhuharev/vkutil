@@ -121,6 +121,21 @@ type ResponsePhotos struct {
 	ResponseError
 }
 
+type City struct {
+	Id     int    `json:"id"`
+	Title  string `json:"title"`
+	Area   string `json:"area,omitempty"`
+	Region string `json:"region"`
+}
+
+type ResponseCities struct {
+	Response struct {
+		Count int    `json:"count"`
+		Items []City `json:"items"`
+	} `json:"response"`
+	ResponseError
+}
+
 func ParseIdsResponse(data []byte) (count int, ids []int, err error) {
 	var r ResponseIds
 	err = json.Unmarshal(data, &r)
@@ -161,4 +176,10 @@ func ParseUnreadMessagesResponse(data []byte) (ms []Message, err error) {
 		ms = append(ms, r.Items[i].Message)
 	}
 	return ms, nil
+}
+
+func ParseResponseUserWithCount(data []byte) (users []User, cnt int, e error) {
+	var r ResponseUserWithCount
+	e = json.Unmarshal(data, &r)
+	return r.Response.Items, r.Response.Count, e
 }
