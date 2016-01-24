@@ -33,3 +33,19 @@ func uniqStrArr(arr []string) []string {
 	}
 	return arr
 }
+
+func arrSplit1K(arr []int) (res [][]int) {
+	//res = append(res, []int)
+	for i, v := range arr {
+		if i%1000 == 0 {
+			res = append(res, []int{})
+		}
+		res[len(res)-1] = append(res[len(res)-1], v)
+	}
+	return
+}
+func debug(f string, args ...interface{}) {
+	if DEBUG {
+		fmt.Printf(f+"\n", args...)
+	}
+}
