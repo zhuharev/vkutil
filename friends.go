@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/zhuharev/vk"
 	"net/url"
 	"strings"
@@ -207,38 +208,103 @@ func (api *Api) UtilsFriendsOfFriends(targetId int) (friendsOfFriends []int, err
 			}
 			friendsOfFriends = append(friendsOfFriends, friendsOfFriend...)
 		}*/
-	return api.UtilsFriendsGet(friends...)
+	m, e := api.UtilsFriendsGet(friends...)
+	if e != nil {
+		return nil, e
+	}
+	for _, v := range m {
+		friendsOfFriends = append(friendsOfFriends, v...)
+	}
+	return
 }
 
-func (api *Api) UtilsFriendsGet(ids ...int) (res []int, err error) {
-	var tcode = `var b = [%s];
+func (api *Api) UtilsFriendsGet(ids ...int) (m map[int][]int, e error) {
+	m = map[int][]int{}
+	rch, done, _ := api.GoUtilsFriendsGet(ids...)
+	for {
+		select {
+		case nm := <-rch:
+			for k, v := range nm {
+				m[k] = v
+			}
+		case <-done:
+			return m, nil
+		}
+	}
+	return nil, nil
+}
+
+func (api *Api) GoUtilsFriendsGet(ids ...int) (m chan map[int][]int, done chan struct{}, chError chan error) {
+	var (
+		iters  = 0
+		offset = 0
+		count  = 25
+		dones  = make(chan struct{})
+		tcode  = `var b = [%s];
 var i = %d;
-var a = API.friends.get({user_id:b[i]}).items;
+var a = [API.friends.get({user_id:b[i],limit:5000}).items];
 i = i+1;
 while(i<%d){
-a = a+","+API.friends.get({user_id:b[i]}).items;
+a = a+[API.friends.get({user_id:b[i],limit:5000}).items];
 i = i + 1;
 };
 return a;`
+	)
 
-	offset := 0
-	count := 25
+	m = make(chan map[int][]int)
+	done = make(chan struct{})
+	chError = make(chan error)
+
 	for i := 0; i < len(ids); i = i + count {
-		resp, err := api.Execute(fmt.Sprintf(tcode, strings.Join(arrIntToStr(ids), ","),
-			offset, offset+count))
-		var r struct {
-			Response string `response`
+
+		iters++
+		if len(ids)-i <= count {
+			count = len(ids) - i
 		}
-		err = json.Unmarshal(resp, &r)
-		if err != nil {
-			fmt.Println(string(resp))
-			return nil, err
-		}
-		arr := arrStrToInt(strings.Split(r.Response, ","))
-		for _, j := range arr {
-			res = append(res, j)
-		}
+		go func(a []int, ch chan map[int][]int, count int, counter int) {
+			color.Green("Spawn func")
+			code := fmt.Sprintf(tcode, strings.Join(arrIntToStr(a), ","),
+				0, count)
+
+			resp, err := api.Execute(code)
+			if err != nil {
+				chError <- err
+				dones <- struct{}{}
+				return
+			}
+			var r struct {
+				Response [][]int `json:"response"`
+				ResponseError
+			}
+			fmt.Println("Unmarshalling")
+			err = json.Unmarshal(resp, &r)
+			if err != nil {
+				chError <- err
+				dones <- struct{}{}
+				return
+			}
+			if r.ResponseError.Error.Code != 0 {
+				chError <- errors.New(r.ResponseError.Error.Msg)
+				dones <- struct{}{}
+				return
+			}
+			m := map[int][]int{}
+			for i, j := range r.Response {
+				m[a[i]] = j
+			}
+
+			ch <- m
+			dones <- struct{}{}
+		}(ids[offset:count+offset], m, count, i)
+		offset += count
 	}
+	go func() {
+		for i := 0; i < iters; i++ {
+			<-dones
+		}
+		done <- struct{}{}
+	}()
+
 	return
 }
 

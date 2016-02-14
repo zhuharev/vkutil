@@ -20,8 +20,10 @@ type ResponseError struct {
 }
 
 type Err struct {
-	Code int    `json:"error_code"`
-	Msg  string `json:"error_msg"`
+	Code       int    `json:"error_code"`
+	Msg        string `json:"error_msg"`
+	CaptchaSid string `json:"captcha_sid"`
+	CaptchaImg string `json:"captcha_img"`
 }
 
 type IdsResp struct {

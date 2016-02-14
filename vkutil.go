@@ -13,7 +13,8 @@ var (
 )
 
 type Api struct {
-	vkApi *vk.Api
+	vkApi      *vk.Api
+	StdinAllow bool
 }
 
 func NewUtils(api *vk.Api) *Api {
