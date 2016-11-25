@@ -14,7 +14,7 @@ func (api *Api) MessagesGet(params ...url.Values) ([]Message, error) {
 	if len(params) == 1 {
 		rparams = params[0]
 	}
-	resp, err := api.vkApi.Request(vk.METHOD_MESSAGES_GET, rparams)
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_GET, rparams)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (api *Api) MessagesSend(uid int, message string,
 	}
 	rparams.Set("user_id", fmt.Sprint(uid))
 	rparams.Set("message", message)
-	resp, err := api.vkApi.Request(vk.METHOD_MESSAGES_SEND, rparams)
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_SEND, rparams)
 	if err != nil {
 		return 0, err
 	}
@@ -49,7 +49,7 @@ func (api *Api) MessagesGetDialogs(params ...url.Values) ([]Message, error) {
 	if len(params) == 1 {
 		rparams = params[0]
 	}
-	resp, err := api.vkApi.Request(vk.METHOD_MESSAGES_GET_DIALOGS, rparams)
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_GET_DIALOGS, rparams)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (api *Api) MessagesMarkAsRead(messageId int, messages ...int) error {
 	if len(messages) > 0 {
 		ids = append(ids, messages...)
 	}
-	resp, err := api.vkApi.Request(vk.METHOD_MESSAGES_MARK_AS_READ, url.Values{
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_MARK_AS_READ, url.Values{
 		"message_ids": {strings.Join(arrIntToStr(ids), ",")},
 	})
 	if err != nil {
@@ -76,4 +76,17 @@ func (api *Api) MessagesMarkAsRead(messageId int, messages ...int) error {
 		return errors.New(r.Error.Msg)
 	}
 	return nil
+}
+
+func (api *Api) MessagesGetHistory(udserId int, params ...url.Values) ([]Message, error) {
+	rparams := url.Values{}
+	if len(params) == 1 {
+		rparams = params[0]
+	}
+	rparams.Set("user_id", fmt.Sprint(udserId))
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_GET_HISTORY, rparams)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMessagesResponse(resp)
 }

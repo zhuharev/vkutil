@@ -14,8 +14,8 @@ func (api *Api) SignUp(firstName, lastName, phone string, args ...url.Values) (s
 		"first_name":    {firstName},
 		"last_name":     {lastName},
 		"phone":         {phone},
-		"client_id":     {fmt.Sprint(api.vkApi.ClientId)},
-		"client_secret": {api.vkApi.ClientSecret},
+		"client_id":     {fmt.Sprint(api.VkApi.ClientId)},
+		"client_secret": {api.VkApi.ClientSecret},
 	}
 	if len(args) > 0 {
 		for k, v := range args[0] {
@@ -25,7 +25,7 @@ func (api *Api) SignUp(firstName, lastName, phone string, args ...url.Values) (s
 			}
 		}
 	}
-	resp, e := api.vkApi.Request(vk.METHOD_AUTH_SIGNUP, uv)
+	resp, e := api.VkApi.Request(vk.METHOD_AUTH_SIGNUP, uv)
 	if e != nil {
 		return "", e
 	}
@@ -61,10 +61,10 @@ func (api *Api) SignUp(firstName, lastName, phone string, args ...url.Values) (s
 }
 
 func (api *Api) Confirm(phone string, code string, password string) (sid string, e error) {
-	resp, e := api.vkApi.Request(vk.METHOD_AUTH_CONFIRM, url.Values{
+	resp, e := api.VkApi.Request(vk.METHOD_AUTH_CONFIRM, url.Values{
 		"phone":         {phone},
-		"client_id":     {fmt.Sprint(api.vkApi.ClientId)},
-		"client_secret": {api.vkApi.ClientSecret},
+		"client_id":     {fmt.Sprint(api.VkApi.ClientId)},
+		"client_secret": {api.VkApi.ClientSecret},
 		"code":          {code},
 		"password":      {password},
 	})

@@ -8,10 +8,10 @@ import (
 	"net/url"
 )
 
-func (api *Api) LikesAdd(likeType string, ownerId, itemId int,
+func (api *Api) LikesAdd(likeType ObjectType, ownerId, itemId int,
 	args ...url.Values) error {
-	resp, err := api.vkApi.Request(vk.METHOD_LIKES_ADD, url.Values{
-		"type":     {likeType},
+	resp, err := api.VkApi.Request(vk.METHOD_LIKES_ADD, url.Values{
+		"type":     {string(likeType)},
 		"item_id":  {fmt.Sprint(itemId)},
 		"owner_id": {fmt.Sprint(ownerId)},
 	})
@@ -27,10 +27,10 @@ func (api *Api) LikesAdd(likeType string, ownerId, itemId int,
 	return nil
 }
 
-func (api *Api) LikesIsLiked(likeType string, ownerId, itemId int,
+func (api *Api) LikesIsLiked(likeType ObjectType, ownerId, itemId int,
 	args ...url.Values) (liked bool, copied bool, err error) {
-	resp, err := api.vkApi.Request(vk.METHOD_LIKES_IS_LIKED, url.Values{
-		"type":     {likeType},
+	resp, err := api.VkApi.Request(vk.METHOD_LIKES_IS_LIKED, url.Values{
+		"type":     {string(likeType)},
 		"item_id":  {fmt.Sprint(itemId)},
 		"owner_id": {fmt.Sprint(ownerId)},
 	})
@@ -62,10 +62,10 @@ func (api *Api) LikesIsLiked(likeType string, ownerId, itemId int,
 	return
 }
 
-func (api *Api) LikesGetList(likeType string, ownerId, itemId int,
+func (api *Api) LikesGetList(likeType ObjectType, ownerId, itemId int,
 	args ...url.Values) (likes []int, err error) {
-	resp, err := api.vkApi.Request(vk.METHOD_LIKES_IS_LIKED, url.Values{
-		"type":     {likeType},
+	resp, err := api.VkApi.Request(vk.METHOD_LIKES_IS_LIKED, url.Values{
+		"type":     {string(likeType)},
 		"item_id":  {fmt.Sprint(itemId)},
 		"owner_id": {fmt.Sprint(ownerId)},
 	})
@@ -84,7 +84,7 @@ func (api *Api) LikesGetList(likeType string, ownerId, itemId int,
 	return
 }
 
-func (api *Api) Get25KLikes(likeType string, ownerId, itemId, offset int,
+func (api *Api) Get25KLikes(likeType ObjectType, ownerId, itemId, offset int,
 	args ...url.Values) (count int, likes []int, err error) {
 	fmtcode := `var i=%d,lim=i+25, a=API.likes.getList({type:"%[2]s",owner_id:%[3]d,item_id:%[4]d,count:1000,offset:i*1000});i=i+1;
 while (i<lim){
@@ -109,7 +109,7 @@ return a;`
 	return resp.Resp.Count, resp.Resp.Items, nil
 }
 
-func (api *Api) LikesGetAll(likeType string, ownerId, itemId int,
+func (api *Api) LikesGetAll(likeType ObjectType, ownerId, itemId int,
 	args ...url.Values) (likes []int, e error) {
 
 	i := 0
@@ -130,4 +130,23 @@ func (api *Api) LikesGetAll(likeType string, ownerId, itemId int,
 	}
 
 	return
+}
+
+func (a *Api) LikesDelete(ot ObjectType, ownerId int, objectId int, params ...url.Values) error {
+	var (
+		param = url.Values{}
+	)
+	if params != nil {
+		param = params[0]
+	}
+	param.Set("type", string(ot))
+	param.Set("owner_id", fmt.Sprint(ownerId))
+	param.Set("item_id", fmt.Sprint(objectId))
+
+	bts, e := a.VkApi.Request(vk.METHOD_LIKES_DELETE, param)
+	if e != nil {
+		return e
+	}
+	_, e = ParseIntResponse(bts)
+	return e
 }

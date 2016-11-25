@@ -15,7 +15,7 @@ func (api *Api) GetCitiesById(id int, ids ...int) ([]City, error) {
 		ids = append([]int{id}, ids...)
 		form.Set("city_ids", strings.Join(arrIntToStr(ids), ","))
 	}
-	resp, e := api.vkApi.Request(vk.METHOD_DATABASE_GET_CITIES_BY_ID, form)
+	resp, e := api.VkApi.Request(vk.METHOD_DATABASE_GET_CITIES_BY_ID, form)
 	if e != nil {
 		return nil, e
 	}
@@ -44,7 +44,7 @@ func (api *Api) GetCityById(id int) (c City, e error) {
 
 func (api *Api) GetCityId(cname string) (int, error) {
 	// russia only
-	resp, e := api.vkApi.Request(vk.METHOD_DATABASE_GET_CITIES, url.Values{"q": {cname}, "country_id": {"1"}, "count": {"1"}})
+	resp, e := api.VkApi.Request(vk.METHOD_DATABASE_GET_CITIES, url.Values{"q": {cname}, "country_id": {"1"}, "count": {"1"}})
 	if e != nil {
 		return 0, e
 	}
@@ -66,7 +66,7 @@ func (api *Api) GetCities(q string) (r ResponseCities, e error) {
 	var (
 		resp []byte
 	)
-	resp, e = api.vkApi.Request(vk.METHOD_DATABASE_GET_CITIES, url.Values{"q": {q}, "country_id": {"1"}})
+	resp, e = api.VkApi.Request(vk.METHOD_DATABASE_GET_CITIES, url.Values{"q": {q}, "country_id": {"1"}})
 	if e != nil {
 		return
 	}

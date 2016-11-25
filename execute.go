@@ -6,7 +6,7 @@ import (
 )
 
 func (api *Api) Execute(code string) ([]byte, error) {
-	return api.vkApi.Request(vk.METHOD_EXECUTE, url.Values{
+	return api.VkApi.Request(vk.METHOD_EXECUTE, url.Values{
 		"code": {code},
 	})
 }

@@ -1,9 +1,37 @@
 package vkutil
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
+
+	"github.com/zhuharev/vk"
 )
+
+func (api *Api) UtilsResolveScreenName(name string) (ObjectType, int, error) {
+	type Responseo struct {
+		Respo struct {
+			Type     ObjectType `json:"type"`
+			ObjectId int        `json:"object_id"`
+		} `json:"response"`
+	}
+	bts, e := api.VkApi.Request(vk.METHOD_UTILS_RESOLVE_SCREEN_NAME, url.Values{
+		"screen_name": {name},
+	})
+	if e != nil {
+		return "", 0, e
+	}
+
+	fmt.Println(string(bts))
+
+	var res Responseo
+
+	e = json.Unmarshal(bts, &res)
+	return res.Respo.Type, res.Respo.ObjectId, e
+}
+
+// vkutil utils
 
 func arrIntToStr(arr []int) (sarr []string) {
 	for _, v := range arr {
@@ -44,6 +72,20 @@ func arrSplit1K(arr []int) (res [][]int) {
 	}
 	return
 }
+
+func arrUniq(in []int) (out []int) {
+	var (
+		dup = map[int]struct{}{}
+	)
+	for _, v := range in {
+		if _, ok := dup[v]; !ok {
+			out = append(out, v)
+			dup[v] = struct{}{}
+		}
+	}
+	return
+}
+
 func debug(f string, args ...interface{}) {
 	if DEBUG {
 		fmt.Printf(f+"\n", args...)

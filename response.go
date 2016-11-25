@@ -2,6 +2,7 @@ package vkutil
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type Response int
@@ -41,18 +42,38 @@ type ResponsePosts struct {
 }
 
 type RespPosts struct {
-	Count int `count`
-	Items []Post
+	Count int     `json:"count"`
+	Items []*Post `json:"items"`
 }
 
 type Post struct {
-	Id        int    `post_id`
-	AccessKey string `access_key`
+	Id        int       `json:"id"`
+	OwnerId   int       `json:"owner_id"`
+	FromId    int       `json:"from_id"`
+	Date      EpochTime `json:"date"`
+	AccessKey string    `json:"access_key"`
 	Likes     struct {
-		Count int `count`
+		Count int `json:"count"`
 	}
-	Text     string `text`
-	PostType string `post_type`
+	Text     string `json:"text"`
+	PostType string `json:"post_type"`
+
+	Attachments []Attachment `json:"attachments"`
+}
+
+type Comment struct {
+	Id             int          `json:"id"`
+	FromId         int          `json:"from_id"`
+	Date           EpochTime    `json:"date"`
+	Text           string       `json:"text"`
+	ReplyToUser    int          `json:"reply_to_user"`
+	ReplyToComment int          `json:"reply_to_comment"`
+	Attachments    []Attachment `json:"attachments"`
+}
+
+type ResponseCommentsList struct {
+	Response []*Comment `json:"response"`
+	ResponseError
 }
 
 type ResponseInt struct {
@@ -145,6 +166,18 @@ func ParseIdsResponse(data []byte) (count int, ids []int, err error) {
 		return 0, []int{}, err
 	}
 	return r.Resp.Count, r.Resp.Items, nil
+}
+
+func ParseIntResponse(data []byte) (int, error) {
+	var r ResponseInt
+	e := json.Unmarshal(data, &r)
+	if e != nil {
+		return 0, e
+	}
+	if r.Error.Code != 0 {
+		return 0, fmt.Errorf("%s", r.Error.Msg)
+	}
+	return r.Response, nil
 }
 
 func ParseUsersResponse(data []byte) (users []User, err error) {

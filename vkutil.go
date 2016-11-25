@@ -13,12 +13,17 @@ var (
 )
 
 type Api struct {
-	vkApi      *vk.Api
+	VkApi      *vk.Api
 	StdinAllow bool
 }
 
+func New() *Api {
+	va := new(vk.Api)
+	return &Api{VkApi: va}
+}
+
 func NewUtils(api *vk.Api) *Api {
-	return &Api{vkApi: api}
+	return &Api{VkApi: api}
 }
 
 /*func (api *Api) GroupsGetAllMembers(groupId int) ([]int, error) {
@@ -28,7 +33,7 @@ func NewUtils(api *vk.Api) *Api {
 		return []int{}, err
 	}
 	for i := 0; i < count; i = i + 1000 {
-		resp, err := api.vkApi.Request(vk.METHOD_GROUPS_GET_MEMBERS, map[string][]string{
+		resp, err := api.VkApi.Request(vk.METHOD_GROUPS_GET_MEMBERS, map[string][]string{
 			"group_id": {fmt.Sprint(groupId)},
 			"count":    {fmt.Sprint(1000)},
 			"offset":   {fmt.Sprint(i)},
@@ -46,7 +51,7 @@ func NewUtils(api *vk.Api) *Api {
 }*/
 
 func (api *Api) GroupsGetMembersCount(groupId int) (int, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_GROUPS_GET_MEMBERS, map[string][]string{
+	resp, err := api.VkApi.Request(vk.METHOD_GROUPS_GET_MEMBERS, map[string][]string{
 		"group_id": {fmt.Sprint(groupId)},
 		"count":    {fmt.Sprint(0)},
 	})

@@ -11,7 +11,7 @@ import (
 )
 
 func (api *Api) FriendsGetIds(args ...url.Values) ([]int, int, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET, args...)
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_GET, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -32,7 +32,7 @@ func (api *Api) FriendsGet(args ...url.Values) ([]User, int, error) {
 		}
 	}
 
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET, arg)
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_GET, arg)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -45,7 +45,7 @@ func (api *Api) FriendsGet(args ...url.Values) ([]User, int, error) {
 }
 
 func (api *Api) FriendsGetRequests(args ...url.Values) ([]int, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET_REQUESTS, args...)
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_GET_REQUESTS, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ type AreFriends struct {
 
 func (api *Api) FriendsAreFriends(ids []int,
 	args ...url.Values) ([]AreFriends, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_ARE_FRIENDS, url.Values{
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_ARE_FRIENDS, url.Values{
 		"user_ids": {strings.Join(arrIntToStr(ids), ",")},
 	})
 	if err != nil {
@@ -131,7 +131,7 @@ func (api *Api) FriendsGetSuggestions() {
 }
 
 func (api *Api) FriendsAdd(userId int, args ...url.Values) (int, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_ADD, url.Values{
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_ADD, url.Values{
 		"user_id": {fmt.Sprint(userId)},
 	})
 	if err != nil {
@@ -147,9 +147,26 @@ func (api *Api) FriendsAdd(userId int, args ...url.Values) (int, error) {
 	}
 	return r.Response, nil
 }
+func (api *Api) FriendsDelete(userId int, args ...url.Values) error {
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_DELETE, url.Values{
+		"user_id": {fmt.Sprint(userId)},
+	})
+	if err != nil {
+		return err
+	}
+	var r ResponseInt
+	err = json.Unmarshal(resp, &r)
+	if err != nil {
+		return err
+	}
+	if r.Error.Code != 0 {
+		return errors.New(r.Error.Msg)
+	}
+	return nil
+}
 
 func (api *Api) FriendsGetMutual(sourceId int, targetUids []int, args ...url.Values) ([]RespFriendsGetMutual, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_FRIENDS_GET_MUTUAL, url.Values{
+	resp, err := api.VkApi.Request(vk.METHOD_FRIENDS_GET_MUTUAL, url.Values{
 		"user_id":     {fmt.Sprint(sourceId)},
 		"target_uids": {strings.Join(arrIntToStr(targetUids), ",")},
 	})
@@ -212,8 +229,17 @@ func (api *Api) UtilsFriendsOfFriends(targetId int) (friendsOfFriends []int, err
 	if e != nil {
 		return nil, e
 	}
-	for _, v := range m {
-		friendsOfFriends = append(friendsOfFriends, v...)
+
+	var dup = map[int]struct{}{}
+
+	for _, arr := range m {
+		for _, id := range arr {
+			if _, ok := dup[id]; !ok {
+				friendsOfFriends = append(friendsOfFriends, id)
+				dup[id] = struct{}{}
+			}
+		}
+
 	}
 	return
 }

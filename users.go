@@ -21,7 +21,7 @@ type ResponseUsers struct {
 //MIT license
 type (
 	User struct {
-		Id                     int          `json:"id"`
+		Id                     int          `json:"id" xorm:"id pk"`
 		FirstName              string       `json:"first_name"`
 		LastName               string       `json:"last_name"`
 		ScreenName             string       `json:"screen_name"`
@@ -29,8 +29,8 @@ type (
 		Sex                    int          `json:"sex,omitempty"`
 		Domain                 string       `json:"domain,omitempty"`
 		Birthdate              Bdate        `json:"bdate,omitempty"`
-		City                   GeoPlace     `json:"city,omitempty"`
-		Country                GeoPlace     `json:"country,omitempty"`
+		City                   GeoPlace     `json:"city,omitempty" xorm:"-"`
+		Country                GeoPlace     `json:"country,omitempty" xorm:"-"`
 		PhotoId                string       `json:"photo_id,omitempty"`
 		Photo50                string       `json:"photo_50,omitempty"`
 		Photo100               string       `json:"photo_100,omitempty"`
@@ -38,20 +38,21 @@ type (
 		PhotoMax               string       `json:"photo_max,omitempty"`
 		Photo200Orig           string       `json:"photo_200_orig,omitempty"`
 		PhotoMaxOrig           string       `json:"photo_max_orig,omitempty"`
-		HasMobile              Bool         `json:"has_mobile,omitempty"`
-		Online                 Bool         `json:"online,omitempty"`
-		CanPost                Bool         `json:"can_post,omitempty"`
-		CanSeeAllPosts         Bool         `json:"can_see_all_posts,omitempty"`
-		CanSeeAudio            Bool         `json:"can_see_audio,omitempty"`
-		CanWritePrivateMessage Bool         `json:"can_write_private_message,omitempty"`
+		HasMobile              Bool         `json:"has_mobile,omitempty" xorm:"-"`
+		Online                 Bool         `json:"online,omitempty" xorm:"-"`
+		CanPost                Bool         `json:"can_post,omitempty" xorm:"-"`
+		CanSeeAllPosts         Bool         `json:"can_see_all_posts,omitempty" xorm:"-"`
+		CanSeeAudio            Bool         `json:"can_see_audio,omitempty" xorm:"-"`
+		CanWritePrivateMessage Bool         `json:"can_write_private_message,omitempty" xorm:"-"`
 		Site                   string       `json:"site,omitempty"`
 		Status                 string       `json:"status,omitempty"`
-		LastSeen               PlatformInfo `json:"last_seen,omitempty"`
+		LastSeen               PlatformInfo `json:"last_seen,omitempty" xorm:"-"`
 		CommonCount            int          `json:"common_count,omitempty"`
 		University             int          `json:"university,omitempty"`
 		UniversityName         string       `json:"university_name,omitempty"`
 		Faculty                int          `json:"faculty,omitempty"`
 		FacultyName            string       `json:"faculty_name,omitempty"`
+		FollowersCount         int          `json:"followers_count"`
 		Graduation             int          `json:"graduation,omitempty"`
 		Relation               Relation     `json:"relation,omitempty"`
 		Universities           []University `json:"universities,omitempty"`
@@ -60,7 +61,7 @@ type (
 		Deactivated            string       `json:"deactivated,omitempty"`
 		Deleted                string       `json:"deleted,omitempty"`
 		Banned                 string       `json:"banned,omitempty"`
-		Counters               Counters     `json:"counters,omitempty"`
+		Counters               Counters     `json:"counters,omitempty" xorm:"-"`
 	}
 
 	Counters struct {
@@ -80,7 +81,7 @@ type (
 	}
 
 	GeoPlace struct {
-		ID    int    `json:"id"`
+		ID    int    `json:"id" xorm:"city_id"`
 		Title string `json:"title"`
 	}
 	// PlatformInfo contains information about time and platform
@@ -161,6 +162,13 @@ func (bit Bool) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (bit Bool) FromDB(data []byte) error {
+	if string(data) == "1" {
+		bit = true
+	}
+	return nil
+}
+
 // todo get all friends
 func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e error) {
 	var (
@@ -173,9 +181,15 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 		ids = arrIntToStr(idsi.([]int))
 	case int:
 		ids = []string{fmt.Sprint(idsi.(int))}
+	case map[int]struct{}:
+		for k := range idsi.(map[int]struct{}) {
+			ids = append(ids, fmt.Sprint(k))
+		}
 	default:
 		ids = []string{}
 	}
+
+	ids = uniqStrArr(ids)
 
 	if len(ids) == 0 {
 		return api.usersGet1K(ids, args...)
@@ -184,17 +198,19 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 	var lim = 1000
 	stop := false
 	for i := 0; i < len(ids) && !stop; i += lim {
+		color.Green("Get 1 k %d", len(res))
 
 		if len(ids)-1 < i+lim {
 			lim = (len(ids)) - i
 			stop = true
 		}
-		color.Cyan("%v %v", ids[i:i+lim], ids)
+		//color.Cyan("%v %v", ids[i:i+lim], ids)
 		users, e := api.usersGet1K(ids[i:i+lim], args...)
 		if e != nil {
 			return nil, e
 		}
 		res = append(res, users...)
+		color.Green("%v", res[len(res)-1])
 	}
 
 	return
@@ -211,46 +227,49 @@ func (api *Api) usersGet1K(ids []string, args ...url.Values) ([]User, error) {
 	if ids != nil {
 		params.Set("user_ids", strings.Join(ids, ","))
 	}
-	resp, err := api.vkApi.Request(vk.METHOD_USERS_GET, params)
+	resp, err := api.VkApi.Request(vk.METHOD_USERS_GET, params)
 	if err != nil {
 		return nil, err
 	}
 	var r ResponseUsers
 	err = json.Unmarshal(resp, &r)
+	if err != nil {
+		fmt.Println(string(resp))
+	}
 	return r.Response, err
 }
 
-func (api *Api) UtilsUsersGet(ids []int) (users []User, e error) {
-	/*	var tcode = `var in = ["1,2,3","4,5,6","7,8,9"];
-		var res = [];
-		var i  = 0;
-		while(i<in.length) {
-		res = res + API.users.get({user_ids:in[i]});
-		i=i+1;
-		}
-		return res;`
+//func (api *Api) UtilsUsersGet(ids []int) (users []User, e error) {
+/*	var tcode = `var in = ["1,2,3","4,5,6","7,8,9"];
+	var res = [];
+	var i  = 0;
+	while(i<in.length) {
+	res = res + API.users.get({user_ids:in[i]});
+	i=i+1;
+	}
+	return res;`
 
-			offset := 0
-			count := 25
-			for i := 0; i < len(ids); i = i + count {
-				resp, err := api.Execute(fmt.Sprintf(tcode, strings.Join(arrIntToStr(ids), ","),
-					offset, offset+count))
-				var r struct {
-					Response string `response`
-				}
-				err = json.Unmarshal(resp, &r)
-				if err != nil {
-					fmt.Println(string(resp))
-					return
-				}
-				arr := arrStrToInt(strings.Split(r.Response, ","))
-				for _, j := range arr {
-					res = append(res, j)
-				}
-			}*/
+		offset := 0
+		count := 25
+		for i := 0; i < len(ids); i = i + count {
+			resp, err := api.Execute(fmt.Sprintf(tcode, strings.Join(arrIntToStr(ids), ","),
+				offset, offset+count))
+			var r struct {
+				Response string `response`
+			}
+			err = json.Unmarshal(resp, &r)
+			if err != nil {
+				fmt.Println(string(resp))
+				return
+			}
+			arr := arrStrToInt(strings.Split(r.Response, ","))
+			for _, j := range arr {
+				res = append(res, j)
+			}
+		}*/
 
-	return
-}
+//	return
+//}
 
 func SplitArr(arr []int, topLevel, botLevel int) (r [][][]int) {
 	var (
@@ -272,7 +291,7 @@ func SplitArr(arr []int, topLevel, botLevel int) (r [][][]int) {
 }
 
 func (api *Api) UsersGetFollowers(args ...url.Values) ([]int, error) {
-	resp, err := api.vkApi.Request(vk.METHOD_USERS_GET_FOLLOWERS, args...)
+	resp, err := api.VkApi.Request(vk.METHOD_USERS_GET_FOLLOWERS, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +310,7 @@ func (api *Api) UsersSearch(q string, args ...url.Values) ([]User, error) {
 	}
 	params.Set("q", q)
 
-	resp, err := api.vkApi.Request(vk.METHOD_USERS_SEARCH, params)
+	resp, err := api.VkApi.Request(vk.METHOD_USERS_SEARCH, params)
 	if err != nil {
 		return nil, err
 	}
@@ -441,4 +460,109 @@ func (api *Api) usersField25K(ids []int, filedname string) (map[int]interface{},
 
 	//}
 	return res, nil
+}
+
+func (api *Api) UtilsUsersGet(ids []int, fields []string) ([]User, error) {
+	var (
+		m []User
+	)
+
+	mc, done, _ := api.GoUtilsUsersGet(ids, fields)
+
+	for {
+		select {
+		case nm := <-mc:
+			m = append(m, nm...)
+		case <-done:
+			return m, nil
+		}
+	}
+}
+
+func (api *Api) GoUtilsUsersGet(ids []int, fields []string) (chan []User, chan struct{}, error) {
+	var (
+		wg    sync.WaitGroup
+		cnt   int
+		ch    = make(chan []User)
+		done  = make(chan struct{})
+		dones = make(chan struct{})
+	)
+	var currArr []int
+	for _, id := range ids {
+		if len(currArr) == 10000 {
+			wg.Add(1)
+			cnt++
+			go func(ch chan []User, arr []int) {
+				m, e := api.users25K(arr, fields)
+				if e != nil {
+					color.Red("%s", e)
+				}
+				ch <- m
+				dones <- struct{}{}
+			}(ch, currArr)
+			currArr = []int{}
+		} else {
+			currArr = append(currArr, id)
+		}
+	}
+
+	if len(currArr) > 0 {
+		cnt++
+		wg.Add(1)
+		go func(ch chan []User, arr []int) {
+			m, e := api.users25K(arr, fields)
+			if e != nil {
+				color.Red("%s", e)
+			}
+			ch <- m
+			dones <- struct{}{}
+			wg.Done()
+		}(ch, currArr)
+	}
+
+	go func(wg sync.WaitGroup, done chan struct{}) {
+		for i := 0; i < cnt; i++ {
+			<-dones
+		}
+		done <- struct{}{}
+	}(wg, done)
+
+	return ch, done, nil
+}
+
+func (api *Api) users25K(ids []int, fields []string) ([]User, error) {
+	if len(ids) > 25000 {
+		ids = ids[:25000]
+	}
+	firstK := ids
+	if len(firstK) > 1000 {
+		firstK = firstK[:1000]
+	}
+	head := fmt.Sprintf(`var a = API.users.get({user_ids:"%s",fields:"`+strings.Join(fields, ",")+`"});`, strings.Join(arrIntToStr(firstK), ","))
+
+	for _, arr := range arrSplit1K(ids[len(firstK):]) {
+		head += fmt.Sprintf(`a=a+API.users.get({user_ids:"%s",fields:"`+strings.Join(fields, ",")+`"});`, strings.Join(arrIntToStr(arr), ","))
+	}
+	head += "return a;"
+	b, e := api.Execute(head)
+
+	type Autogenerated struct {
+		Response []User `json:"response"`
+		ResponseError
+	}
+	var ag Autogenerated
+
+	e = json.Unmarshal(b, &ag)
+	if e != nil {
+		color.Red("%s", b)
+		return nil, e
+	}
+	if ag.Error.Code != 0 {
+		return nil, fmt.Errorf("%s", ag.Error.Msg)
+	}
+
+	//if e != nil {
+
+	//}
+	return ag.Response, nil
 }
