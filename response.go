@@ -46,21 +46,6 @@ type RespPosts struct {
 	Items []*Post `json:"items"`
 }
 
-type Post struct {
-	Id        int       `json:"id"`
-	OwnerId   int       `json:"owner_id"`
-	FromId    int       `json:"from_id"`
-	Date      EpochTime `json:"date"`
-	AccessKey string    `json:"access_key"`
-	Likes     struct {
-		Count int `json:"count"`
-	}
-	Text     string `json:"text"`
-	PostType string `json:"post_type"`
-
-	Attachments []Attachment `json:"attachments"`
-}
-
 type Comment struct {
 	Id             int          `json:"id"`
 	FromId         int          `json:"from_id"`
@@ -217,4 +202,14 @@ func ParseResponseUserWithCount(data []byte) (users []User, cnt int, e error) {
 	var r ResponseUserWithCount
 	e = json.Unmarshal(data, &r)
 	return r.Response.Items, r.Response.Count, e
+}
+
+type OutRequestDeletedResponse struct {
+	OutRequestDeleted `json:"response"`
+	ResponseError     `json:"error"`
+}
+
+type OutRequestDeleted struct {
+	Success           int `json:"success"`
+	OutRequestDeleted int `json:"out_request_deleted"`
 }

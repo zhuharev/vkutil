@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/zhuharev/vk"
+	"io/ioutil"
 	"net/url"
 )
 
@@ -101,4 +102,45 @@ func (api *Api) Confirm(phone string, code string, password string) (sid string,
 		return "", errors.New(r.Error.Msg)
 	}
 	return r.Resp.Sid, nil
+}
+
+func (api *Api) DirectAuth(login, password string) error {
+	var auth_url = "https://oauth.vk.com/token"
+	var params = url.Values{
+		"grant_type":    {"password"},
+		"client_id":     {fmt.Sprint(Android)},
+		"client_secret": {AndroidSecret},
+		"username":      {login},
+		"password":      {password},
+		"v":             {vk.VK_API_VERSION},
+		"scope":         {UP_All.String()},
+	}
+
+	res, e := api.VkApi.HTTPClient().Get(auth_url + "?" + params.Encode())
+	if e != nil {
+		return e
+	}
+	defer res.Body.Close()
+
+	type TokenResponse struct {
+		Token  string `json:"access_token"`
+		UserId int    `json:"user_id"`
+	}
+
+	var tr TokenResponse
+
+	bts, e := ioutil.ReadAll(res.Body)
+	if e != nil {
+		return e
+	}
+
+	e = json.Unmarshal(bts, &tr)
+	if e != nil {
+		return e
+	}
+
+	api.VkApi.AccessToken = tr.Token
+	api.VkApi.UserId = fmt.Sprint(tr.UserId)
+
+	return e
 }

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zhuharev/vk"
+	"io/ioutil"
+	"os"
 	//log "gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -20,6 +22,25 @@ type Api struct {
 func New() *Api {
 	va := new(vk.Api)
 	return &Api{VkApi: va}
+}
+
+func NewWithTokenFile(tokenFilePath string) (*Api, error) {
+	va := new(vk.Api)
+
+	f, e := os.OpenFile(tokenFilePath, os.O_RDONLY, 0777)
+	if e == nil {
+		bts, e := ioutil.ReadAll(f)
+		if e != nil {
+			return nil, e
+		}
+		f.Close()
+		va.AccessToken = string(bts)
+	} else {
+		return nil, e
+	}
+
+	return &Api{VkApi: va}, nil
+
 }
 
 func NewUtils(api *vk.Api) *Api {

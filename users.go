@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/zhuharev/vk"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/fatih/color"
+	"github.com/zhuharev/vk"
 )
 
 type ResponseUsers struct {
@@ -62,6 +64,8 @@ type (
 		Deleted                string       `json:"deleted,omitempty"`
 		Banned                 string       `json:"banned,omitempty"`
 		Counters               Counters     `json:"counters,omitempty" xorm:"-"`
+
+		Instagram string `json:"instagram"`
 	}
 
 	Counters struct {
@@ -169,6 +173,16 @@ func (bit Bool) FromDB(data []byte) error {
 	return nil
 }
 
+func (u User) Field(fieldName string) interface{} {
+	switch fieldName {
+	case "first_name":
+		return u.FirstName
+	case "last_name":
+		return u.LastName
+	}
+	return nil
+}
+
 // todo get all friends
 func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e error) {
 	var (
@@ -198,7 +212,6 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 	var lim = 1000
 	stop := false
 	for i := 0; i < len(ids) && !stop; i += lim {
-		color.Green("Get 1 k %d", len(res))
 
 		if len(ids)-1 < i+lim {
 			lim = (len(ids)) - i
@@ -210,7 +223,7 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 			return nil, e
 		}
 		res = append(res, users...)
-		color.Green("%v", res[len(res)-1])
+
 	}
 
 	return
@@ -235,6 +248,7 @@ func (api *Api) usersGet1K(ids []string, args ...url.Values) ([]User, error) {
 	err = json.Unmarshal(resp, &r)
 	if err != nil {
 		fmt.Println(string(resp))
+		return nil, err
 	}
 	return r.Response, err
 }
@@ -303,7 +317,7 @@ func (api *Api) UsersGetFollowers(args ...url.Values) ([]int, error) {
 	return r.Resp.Items, nil
 }
 
-func (api *Api) UsersSearch(q string, args ...url.Values) ([]User, error) {
+func (api *Api) UsersSearch(q string, args ...url.Values) ([]User, int, error) {
 	params := url.Values{}
 	if len(args) == 1 {
 		params = args[0]
@@ -312,11 +326,11 @@ func (api *Api) UsersSearch(q string, args ...url.Values) ([]User, error) {
 
 	resp, err := api.VkApi.Request(vk.METHOD_USERS_SEARCH, params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var r ResponseUserWithCount
 	err = json.Unmarshal(resp, &r)
-	return r.Response.Items, err
+	return r.Response.Items, r.Response.Count, err
 }
 
 // utils
@@ -351,76 +365,96 @@ func (api *Api) UtilsUsersGetId(domain string) (int, error) {
 }
 
 func (api *Api) UtilsUsersField(ids []int, filedname string) (map[int]interface{}, error) {
+	ids = arrUniq(ids)
+
 	var (
 		m = map[int]interface{}{}
 	)
 
-	mc, done, _ := api.GoUtilsUsersField(ids, filedname)
+	mc, done, errors := api.GoUtilsUsersField(ids, filedname)
 
 	for {
 		select {
 		case nm := <-mc:
-			for k, v := range nm {
-				m[k] = v
+			color.Cyan("GET")
+			for id, field := range nm {
+				m[id] = field
 			}
 		case <-done:
 			return m, nil
+		case err := <-errors:
+			color.Red("%s", err)
 		}
 	}
 }
 
-func (api *Api) GoUtilsUsersField(ids []int, filedname string) (chan map[int]interface{}, chan struct{}, error) {
+func (api *Api) GoUtilsUsersField(ids []int, filedname string) (chan map[int]interface{}, chan struct{}, chan error) {
 	var (
-		wg    sync.WaitGroup
 		cnt   int
 		ch    = make(chan map[int]interface{})
 		done  = make(chan struct{})
 		dones = make(chan struct{})
-	)
-	var currArr []int
-	for _, id := range ids {
-		if len(currArr) == 10000 {
-			wg.Add(1)
-			cnt++
-			go func(ch chan map[int]interface{}, arr []int) {
-				m, e := api.usersField25K(arr, filedname)
-				if e != nil {
-					color.Red("%s", e)
-				}
-				ch <- m
-				dones <- struct{}{}
-			}(ch, currArr)
-			currArr = []int{}
-		} else {
-			currArr = append(currArr, id)
-		}
-	}
+		errs  = make(chan error)
 
-	if len(currArr) > 0 {
-		cnt++
-		wg.Add(1)
-		go func(ch chan map[int]interface{}, arr []int) {
+		jobs = make(chan []int, 500)
+	)
+
+	var run = func(jobs chan []int) {
+		for arr := range jobs {
+
 			m, e := api.usersField25K(arr, filedname)
 			if e != nil {
-				color.Red("%s", e)
+				errs <- e
+				dones <- struct{}{}
+				continue
+			}
+			if len(m) != len(arr) {
+				errs <- fmt.Errorf("[users.go:399] Len mishmatch got %d, need %d", len(m), len(arr))
+				dones <- struct{}{}
+				continue
 			}
 			ch <- m
 			dones <- struct{}{}
-			wg.Done()
-		}(ch, currArr)
+		}
 	}
 
-	go func(wg sync.WaitGroup, done chan struct{}) {
+	for i := 0; i < 15; i++ {
+		go run(jobs)
+	}
+
+	{
+		var currArr []int
+		for _, id := range ids {
+
+			if len(currArr) == 10000 {
+				cnt++
+				jobs <- currArr
+				currArr = []int{}
+			} else {
+				currArr = append(currArr, id)
+			}
+		}
+
+		if len(currArr) > 0 {
+			cnt++
+			jobs <- currArr
+		}
+	}
+
+	go func(done chan struct{}) {
 		for i := 0; i < cnt; i++ {
 			<-dones
 		}
 		done <- struct{}{}
-	}(wg, done)
+	}(done)
 
 	return ch, done, nil
 }
 
 func (api *Api) usersField25K(ids []int, filedname string) (map[int]interface{}, error) {
+	start := time.Now()
+	ids = arrUniq(ids)
+	color.Green("Got %d", len(ids))
 	if len(ids) > 25000 {
 		ids = ids[:25000]
 	}
@@ -435,6 +469,10 @@ func (api *Api) usersField25K(ids []int, filedname string) (map[int]interface{},
 	}
 	head += "return a;"
 	b, e := api.Execute(head)
+	if e != nil {
+		fmt.Println(string(b))
+		return nil, e
+	}
 
 	type Autogenerated struct {
 		Response []interface{} `json:"response"`
@@ -456,9 +494,62 @@ func (api *Api) usersField25K(ids []int, filedname string) (map[int]interface{},
 		res[ids[i]] = v
 	}
 
+	if len(ids) != len(res) {
+		color.Red("[473] Len mishmatch got %d, need %d", len(res), len(ids))
+		users, e := api.UsersGet(ids, url.Values{"fields": {filedname}})
+		if e != nil {
+			color.Red("[484] %s", e)
+
+		}
+		d := map[int]struct{}{}
+		for _, v := range users {
+			res[v.Id] = v.Field(filedname)
+			d[v.Id] = struct{}{}
+		}
+		var lose = []int{}
+		for _, id := range ids {
+			if _, has := d[id]; !has {
+				lose = append(lose, id)
+			}
+		}
+
+		/* fix losed users */
+		users, e = api.UsersGet(lose, url.Values{"fields": {filedname}})
+		if e != nil {
+			color.Red("[484] %s", e)
+
+		}
+		for _, v := range users {
+			res[v.Id] = v.Field(filedname)
+			d[v.Id] = struct{}{}
+		}
+
+		lose = []int{}
+		for _, id := range ids {
+			if _, has := d[id]; !has {
+				lose = append(lose, id)
+			}
+		}
+
+		/* fix losed users */
+		users, e = api.UsersGet(lose, url.Values{"fields": {filedname}})
+		if e != nil {
+			color.Red("[484] %s", e)
+
+		}
+		for _, v := range users {
+			res[v.Id] = v.Field(filedname)
+			d[v.Id] = struct{}{}
+		}
+
+		color.Green("Fixed [520] got %d, has %d", len(ids), len(res))
+		//return nil, ErrArrayLengthMismatch
+	}
+
 	//if e != nil {
 
 	//}
+	color.Green("Getted %d for %s", len(ids), time.Since(start))
 	return res, nil
 }
 
@@ -520,12 +611,12 @@ func (api *Api) GoUtilsUsersGet(ids []int, fields []string) (chan []User, chan s
 		}(ch, currArr)
 	}
 
-	go func(wg sync.WaitGroup, done chan struct{}) {
+	go func(done chan struct{}) {
 		for i := 0; i < cnt; i++ {
 			<-dones
 		}
 		done <- struct{}{}
-	}(wg, done)
+	}(done)
 
 	return ch, done, nil
 }
@@ -565,4 +656,29 @@ func (api *Api) users25K(ids []int, fields []string) ([]User, error) {
 
 	//}
 	return ag.Response, nil
+}
+
+func (api *Api) UsersGetSubscriptions() (users []int, groups []int, e error) {
+	type SubscriptionsResponse struct {
+		Response struct {
+			Users struct {
+				Count int   `json:"count"`
+				Items []int `json:"items"`
+			} `json:"users"`
+			Groups struct {
+				Count int   `json:"count"`
+				Items []int `json:"items"`
+			} `json:"groups"`
+		} `json:"response"`
+	}
+	var r SubscriptionsResponse
+	bts, e := api.VkApi.Request(vk.METHOD_USERS_GET_SUBSCRIPTIONS, url.Values{"count": {"200"}})
+	if e != nil {
+		return
+	}
+	e = json.Unmarshal(bts, &r)
+	if e != nil {
+		return
+	}
+	return r.Response.Users.Items, r.Response.Groups.Items, nil
 }

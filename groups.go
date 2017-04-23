@@ -3,10 +3,27 @@ package vkutil
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zhuharev/vk"
 	"log"
 	"net/url"
+
+	"github.com/zhuharev/vk"
 )
+
+func (api *Api) GroupsGet(args ...url.Values) ([]int, error) {
+	params := url.Values{}
+	if len(args) == 1 {
+		params = args[0]
+	}
+	r, err := api.VkApi.Request(vk.METHOD_GROUPS_GET, params)
+	if err != nil {
+		return nil, err
+	}
+	_, ids, err := ParseIdsResponse(r)
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
 
 func (api *Api) GroupsJoin(groupId int, args ...url.Values) error {
 	params := url.Values{}
@@ -87,7 +104,7 @@ return members;
 			log.Println(err)
 		}
 		var r struct {
-			Response []int `response`
+			Response []int `json:"response"`
 		}
 		err = json.Unmarshal(resp, &r)
 		if err != nil {

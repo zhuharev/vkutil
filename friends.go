@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/zhuharev/vk"
+	"log"
 	"net/url"
 	"strings"
+
+	"github.com/zhuharev/vk"
 )
 
 func (api *Api) FriendsGetIds(args ...url.Values) ([]int, int, error) {
@@ -70,7 +71,7 @@ func (api *Api) FriendsGetAllFollowers() ([]int, error) {
 	return followers, nil
 }
 
-func (api *Api) FriendsGetAllFollowing() ([]int, error) {
+func (api *Api) FriendsGetAllFollowing(withFriendss ...bool) ([]int, error) {
 	code := `var a = API.friends.getRequests({"out":1,count:1000});
 var b = a.items;
 var cnt = 0;
@@ -81,21 +82,21 @@ b=b+API.friends.getRequests({"out":1,count:1000,offset:cnt}).items;
 return b;`
 	resp, err := api.Execute(code)
 	var r struct {
-		Response []int `response`
+		Response []int `json:"response"`
 	}
 	err = json.Unmarshal(resp, &r)
 	if err != nil {
 		fmt.Println(string(resp))
 		return nil, err
 	}
-	ids, _, err := api.FriendsGetIds()
-	if err != nil {
-		return nil, err
+	if withFriendss != nil && withFriendss[0] {
+		ids, _, err := api.FriendsGetIds()
+		if err != nil {
+			return nil, err
+		}
+		r.Response = append(r.Response, ids...)
 	}
-	for _, j := range r.Response {
-		ids = append(ids, j)
-	}
-	return ids, nil
+	return r.Response, nil
 }
 
 type ResponseAreFriends struct {
@@ -154,13 +155,17 @@ func (api *Api) FriendsDelete(userId int, args ...url.Values) error {
 	if err != nil {
 		return err
 	}
-	var r ResponseInt
+	var r OutRequestDeletedResponse
+	fmt.Printf("%s", resp)
 	err = json.Unmarshal(resp, &r)
 	if err != nil {
 		return err
 	}
 	if r.Error.Code != 0 {
 		return errors.New(r.Error.Msg)
+	}
+	if r.Success != 1 {
+		return errors.New("Some error on friends delete")
 	}
 	return nil
 }
@@ -257,7 +262,6 @@ func (api *Api) UtilsFriendsGet(ids ...int) (m map[int][]int, e error) {
 			return m, nil
 		}
 	}
-	return nil, nil
 }
 
 func (api *Api) GoUtilsFriendsGet(ids ...int) (m chan map[int][]int, done chan struct{}, chError chan error) {
@@ -281,52 +285,71 @@ return a;`
 	done = make(chan struct{})
 	chError = make(chan error)
 
-	for i := 0; i < len(ids); i = i + count {
+	gf := func(a []int, ch chan map[int][]int, count int, counter int) {
+		code := fmt.Sprintf(tcode, strings.Join(arrIntToStr(a), ","),
+			0, count)
 
-		iters++
-		if len(ids)-i <= count {
-			count = len(ids) - i
-		}
-		go func(a []int, ch chan map[int][]int, count int, counter int) {
-			color.Green("Spawn func")
-			code := fmt.Sprintf(tcode, strings.Join(arrIntToStr(a), ","),
-				0, count)
-
-			resp, err := api.Execute(code)
-			if err != nil {
-				chError <- err
-				dones <- struct{}{}
-				return
-			}
-			var r struct {
-				Response [][]int `json:"response"`
-				ResponseError
-			}
-			fmt.Println("Unmarshalling")
-			err = json.Unmarshal(resp, &r)
-			if err != nil {
-				chError <- err
-				dones <- struct{}{}
-				return
-			}
-			if r.ResponseError.Error.Code != 0 {
-				chError <- errors.New(r.ResponseError.Error.Msg)
-				dones <- struct{}{}
-				return
-			}
-			m := map[int][]int{}
-			for i, j := range r.Response {
-				m[a[i]] = j
-			}
-
-			ch <- m
+		resp, err := api.Execute(code)
+		if err != nil {
+			chError <- err
 			dones <- struct{}{}
-		}(ids[offset:count+offset], m, count, i)
-		offset += count
+			return
+		}
+		var r struct {
+			Response [][]int `json:"response"`
+			ResponseError
+		}
+		if DEBUG {
+			log.Println(string(resp))
+		}
+		err = json.Unmarshal(resp, &r)
+		if err != nil {
+			chError <- err
+			dones <- struct{}{}
+			return
+		}
+		if r.ResponseError.Error.Code != 0 {
+			chError <- errors.New(r.ResponseError.Error.Msg)
+			dones <- struct{}{}
+			return
+		}
+		m := map[int][]int{}
+		for i, j := range r.Response {
+			m[a[i]] = j
+		}
+
+		ch <- m
+		dones <- struct{}{}
+
 	}
+
+	tcount := count
+	for i := 0; i < len(ids); i = i + tcount {
+		iters++
+		if len(ids)-i <= tcount {
+			tcount = len(ids) - i
+		}
+	}
+
+	go func() {
+		for i := 0; i < len(ids); i = i + count {
+
+			if len(ids)-i <= count {
+				count = len(ids) - i
+			}
+
+			gf(ids[offset:count+offset], m, count, i)
+
+			offset += count
+		}
+	}()
+
 	go func() {
 		for i := 0; i < iters; i++ {
 			<-dones
+			if DEBUG {
+				log.Printf("done %d/%d", i, iters)
+			}
 		}
 		done <- struct{}{}
 	}()
@@ -362,7 +385,7 @@ return a;`
 	code := fmt.Sprintf(codefmt, sourceId, strings.Join(arrIntToStr(ids), ","))
 	resp, err := api.Execute(code)
 	var r struct {
-		Response []int `response`
+		Response []int `json:"response"`
 	}
 	err = json.Unmarshal(resp, &r)
 	if err != nil {

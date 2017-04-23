@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 
 	"github.com/zhuharev/vk"
@@ -67,6 +68,10 @@ func arrSplit1K(arr []int) (res [][]int) {
 	for i, v := range arr {
 		if i%1000 == 0 {
 			res = append(res, []int{})
+			if i > 1001 {
+				//fmt.Println(res[len(res)-2][0], res[len(res)-2][len(res[len(res)-2])-1])
+
+			}
 		}
 		res[len(res)-1] = append(res[len(res)-1], v)
 	}
@@ -83,6 +88,7 @@ func arrUniq(in []int) (out []int) {
 			dup[v] = struct{}{}
 		}
 	}
+	sort.Ints(out)
 	return
 }
 
