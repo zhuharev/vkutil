@@ -66,9 +66,9 @@ func uniqStrArr(arr []string) []string {
 func arrSplit1K(arr []int) (res [][]int) {
 	//res = append(res, []int)
 	for i, v := range arr {
-		if i%1000 == 0 {
+		if i%700 == 0 {
 			res = append(res, []int{})
-			if i > 1001 {
+			if i > 701 {
 				//fmt.Println(res[len(res)-2][0], res[len(res)-2][len(res[len(res)-2])-1])
 
 			}
