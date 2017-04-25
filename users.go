@@ -237,7 +237,7 @@ func (api *Api) usersGet1K(ids []string, args ...url.Values) ([]User, error) {
 	if len(ids) > 1000 {
 		ids = ids[:1000]
 	}
-	if ids != nil {
+	if len(ids) > 0 {
 		params.Set("user_ids", strings.Join(ids, ","))
 	}
 	resp, err := api.VkApi.Request(vk.METHOD_USERS_GET, params)
