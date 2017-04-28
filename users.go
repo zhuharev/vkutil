@@ -19,8 +19,8 @@ type ResponseUsers struct {
 	ResponseError
 }
 
-//structures from https://github.com/shalakhin/vk/blob/master/users.go
-//MIT license
+// structures from https://github.com/shalakhin/vk/blob/master/users.go
+// MIT license
 type (
 	User struct {
 		Id                     int          `json:"id" xorm:"id pk"`

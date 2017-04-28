@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/zhuharev/vk"
 	"io/ioutil"
 	"net/url"
+
+	"github.com/fatih/color"
+	"github.com/zhuharev/vk"
 )
 
 func (api *Api) SignUp(firstName, lastName, phone string, args ...url.Values) (sid string, e error) {
@@ -104,19 +105,20 @@ func (api *Api) Confirm(phone string, code string, password string) (sid string,
 	return r.Resp.Sid, nil
 }
 
+// DirectAuth autorize client and get access_token as official Vk's android app
 func (api *Api) DirectAuth(login, password string) error {
-	var auth_url = "https://oauth.vk.com/token"
+	var authURL = "https://oauth.vk.com/token"
 	var params = url.Values{
 		"grant_type":    {"password"},
 		"client_id":     {fmt.Sprint(Android)},
 		"client_secret": {AndroidSecret},
 		"username":      {login},
 		"password":      {password},
-		"v":             {vk.VK_API_VERSION},
-		"scope":         {UP_All.String()},
+		"v":             {vk.VkAPIVersion},
+		"scope":         {UPAll.String()},
 	}
 
-	res, e := api.VkApi.HTTPClient().Get(auth_url + "?" + params.Encode())
+	res, e := api.VkApi.HTTPClient().Get(authURL + "?" + params.Encode())
 	if e != nil {
 		return e
 	}

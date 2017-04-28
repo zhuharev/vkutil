@@ -4,24 +4,36 @@ import (
 	"strconv"
 )
 
+// UserPermission used in auth
 type UserPermission int
 
 const (
-	UP_Notify UserPermission = 1 << iota
-	UP_Friends
-	UP_Photos
-	UP_Audio
-	UP_Video
-	UP_Pages
+	// UPNotify notify comment
+	UPNotify UserPermission = 1 << iota
+	UPFriends
+	UPPhotos
+	UPAudio
+	UPVideo
+	_
+	_
+
+	UPPages
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	UPOffline
 )
 
 const (
-	UP_All = UP_Notify | UP_Friends | UP_Photos | UP_Audio
+	// UPAll represent max permission
+	UPAll = UPNotify | UPFriends | UPPhotos | UPAudio | UPOffline
 )
 
 func (u UserPermission) String() string {
-	switch u {
-	default:
-		return strconv.Itoa(int(UP_All))
-	}
+	return strconv.Itoa(int(u))
 }

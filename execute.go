@@ -1,15 +1,14 @@
 package vkutil
 
 import (
-	"github.com/zhuharev/vk"
 	"log"
 	"net/url"
+
+	"github.com/zhuharev/vk"
 )
 
 func (api *Api) Execute(code string) ([]byte, error) {
-	if vk.DEBUG {
-		log.Println(code)
-	}
+	log.Println(code)
 	return api.VkApi.Request(vk.METHOD_EXECUTE, url.Values{
 		"code": {code},
 	})
