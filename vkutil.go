@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/zhuharev/vk"
 	"io/ioutil"
+	"log"
 	"os"
+
+	"github.com/zhuharev/vk"
 	//log "gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -17,6 +19,7 @@ var (
 type Api struct {
 	VkApi      *vk.Api
 	StdinAllow bool
+	debug      bool
 }
 
 func New() *Api {
@@ -45,6 +48,14 @@ func NewWithTokenFile(tokenFilePath string) (*Api, error) {
 
 func NewUtils(api *vk.Api) *Api {
 	return &Api{VkApi: api}
+}
+
+// SetDebug enable loggin and set log flags longfile
+func (api *Api) SetDebug(debug bool) {
+	if debug {
+		log.SetFlags(log.LstdFlags | log.Llongfile)
+	}
+	api.debug = debug
 }
 
 /*func (api *Api) GroupsGetAllMembers(groupId int) ([]int, error) {
