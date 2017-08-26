@@ -9,6 +9,20 @@ import (
 	"github.com/zhuharev/vk"
 )
 
+type Group struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+
+	ScreenName string `json:"screen_name"`
+	IsClosed   int    `json:"is_closed"`
+
+	MembersCount int `json:"members_count"`
+}
+
+func (g Group) Closed() bool {
+	return g.IsClosed != 0
+}
+
 func (api *Api) GroupsGet(args ...url.Values) ([]int, error) {
 	params := url.Values{}
 	if len(args) == 1 {
@@ -23,6 +37,28 @@ func (api *Api) GroupsGet(args ...url.Values) ([]int, error) {
 		return nil, err
 	}
 	return ids, nil
+}
+
+// GroupsGetByID get group by id
+func (api *Api) GroupsGetByID(ids interface{}, args ...url.Values) ([]Group, error) {
+	params := url.Values{}
+	if len(args) == 1 {
+		params = args[0]
+	}
+	params = setToUrlValues("group_ids", ids, params)
+	r, err := api.VkApi.Request(vk.METHOD_GROUPS_GET_BY_ID, params)
+	if err != nil {
+		return nil, err
+	}
+	type GroupsResponse struct {
+		Groups []Group `json:"response"`
+	}
+	var gr GroupsResponse
+	err = json.Unmarshal(r, &gr)
+	if err != nil {
+		return nil, err
+	}
+	return gr.Groups, nil
 }
 
 func (api *Api) GroupsJoin(groupId int, args ...url.Values) error {
@@ -149,3 +185,27 @@ function getMembers20k(group_id, members_count) {
         }
     });
 */
+
+func (a *Api) GroupsSearch(q string, params ...url.Values) ([]Group, error) {
+	param := setToUrlValues("q", q, params...)
+	bts, err := a.VkApi.Request(vk.METHOD_GROUPS_SEARCH, param)
+	if err != nil {
+		return nil, err
+	}
+
+	type Response struct {
+		Resp struct {
+			Count int     `json:"count"`
+			Items []Group `json:"items"`
+		} `json:"response"`
+	}
+
+	var r Response
+
+	err = json.Unmarshal(bts, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Resp.Items, nil
+}

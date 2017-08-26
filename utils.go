@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/zhuharev/vk"
 )
@@ -96,4 +97,58 @@ func debug(f string, args ...interface{}) {
 	if DEBUG {
 		fmt.Printf(f+"\n", args...)
 	}
+}
+
+func setToUrlValues(key string, val interface{}, params ...url.Values) url.Values {
+	param := url.Values{}
+	if len(params) > 0 {
+		param = params[0]
+	}
+	switch i := val.(type) {
+	case int, int64:
+		param.Set(key, fmt.Sprint(i))
+	case string:
+		param.Set(key, i)
+	case []string:
+		param.Set(key, strings.Join(i, ","))
+	case []int:
+		param.Set(key, strings.Join(arrIntToStr(i), ","))
+	}
+	return param
+}
+
+func ParseCallbackURL(uri string) (token string, err error) {
+	u, err := url.Parse(uri)
+	if err != nil {
+		return
+	}
+	vals, err := url.ParseQuery(u.Fragment)
+	if err != nil {
+		return
+	}
+	return vals.Get("access_token"), nil
+}
+
+func ParseDomain(uri string) (token string, err error) {
+	u, err := url.Parse(uri)
+	if err != nil {
+		return
+	}
+	return strings.TrimPrefix(u.Path, "/"), nil
+}
+
+func ParseBoardURL(uri string) (groupID, topicID, postID int, err error) {
+	uri = strings.TrimSuffix(uri, "?offset=last&scroll=1")
+	if strings.Contains(uri, "?") {
+		_, err = fmt.Sscanf(uri, "https://vk.com/topic-%d_%d?offset=%d", &groupID, &topicID, &postID)
+		if err != nil {
+			return
+		}
+		return
+	}
+	_, err = fmt.Sscanf(uri, "https://vk.com/topic-%d_%d", &groupID, &topicID)
+	if err != nil {
+		return
+	}
+	return
 }

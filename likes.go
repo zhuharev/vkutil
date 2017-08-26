@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/zhuharev/vk"
 	"net/url"
+
+	"github.com/zhuharev/vk"
 )
 
 func (api *Api) LikesAdd(likeType ObjectType, ownerId, itemId int,
@@ -63,23 +64,53 @@ func (api *Api) LikesIsLiked(likeType ObjectType, ownerId, itemId int,
 }
 
 func (api *Api) LikesGetList(likeType ObjectType, ownerId, itemId int,
-	args ...url.Values) (likes []int, err error) {
-	resp, err := api.VkApi.Request(vk.METHOD_LIKES_IS_LIKED, url.Values{
-		"type":     {string(likeType)},
-		"item_id":  {fmt.Sprint(itemId)},
-		"owner_id": {fmt.Sprint(ownerId)},
-	})
+	args ...url.Values) (likers []int, err error) {
+	param := setToUrlValues("type", string(likeType), args...)
+	param.Set("item_id", fmt.Sprint(itemId))
+	param = setToUrlValues("owner_id", ownerId, param)
+	resp, err := api.VkApi.Request(vk.METHOD_LIKES_GET_LIST, param)
 	if err != nil {
 		return
 	}
 
-	var r IdsResp
+	var r ResponseIds
 	err = json.Unmarshal(resp, &r)
 	if err != nil {
 		return
 	}
 
-	likes = r.Items
+	likers = r.Resp.Items
+
+	return
+}
+
+func (api *Api) LikesGetListAll(likeType ObjectType, ownerId, itemId int,
+	args ...url.Values) (likers []int, err error) {
+	param := setToUrlValues("type", string(likeType), args...)
+	param.Set("item_id", fmt.Sprint(itemId))
+	param = setToUrlValues("owner_id", ownerId, param)
+	param = setToUrlValues("count", 1000, param)
+	offset := 0
+	for {
+		param = setToUrlValues("offset", offset, param)
+		var resp []byte
+		resp, err = api.VkApi.Request(vk.METHOD_LIKES_GET_LIST, param)
+		if err != nil {
+			return
+		}
+
+		var r ResponseIds
+		err = json.Unmarshal(resp, &r)
+		if err != nil {
+			return
+		}
+
+		likers = append(likers, r.Resp.Items...)
+		if offset >= r.Resp.Count {
+			break
+		}
+		offset += 1000
+	}
 
 	return
 }

@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/zhuharev/vk"
 	"net/url"
 	"strings"
+
+	"github.com/zhuharev/vk"
 )
 
 func (api *Api) MessagesGet(params ...url.Values) ([]Message, error) {
@@ -44,7 +45,7 @@ func (api *Api) MessagesSend(uid int, message string,
 	return r.Response, nil
 }
 
-func (api *Api) MessagesGetDialogs(params ...url.Values) ([]Message, error) {
+func (api *Api) MessagesGetDialogs(params ...url.Values) ([]Dialog, error) {
 	rparams := url.Values{}
 	if len(params) == 1 {
 		rparams = params[0]
@@ -53,7 +54,7 @@ func (api *Api) MessagesGetDialogs(params ...url.Values) ([]Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ParseUnreadMessagesResponse(resp)
+	return ParseDialogsResponse(resp)
 }
 
 func (api *Api) MessagesMarkAsRead(messageId int, messages ...int) error {
@@ -89,4 +90,19 @@ func (api *Api) MessagesGetHistory(udserId int, params ...url.Values) ([]Message
 		return nil, err
 	}
 	return ParseMessagesResponse(resp)
+}
+
+func (api *Api) MessagesSetActivity(udserID int, params ...url.Values) error {
+	rparams := url.Values{}
+	if len(params) == 1 {
+		rparams = params[0]
+	}
+	rparams.Set("user_id", fmt.Sprint(udserID))
+	rparams.Set("type", "typing")
+	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_SET_ACTIVITY, rparams)
+	if err != nil {
+		return err
+	}
+	_, err = ParseIntResponse(resp)
+	return err
 }

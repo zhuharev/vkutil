@@ -27,8 +27,12 @@ func New() *Api {
 	return &Api{VkApi: va}
 }
 
+func NewWithToken(token string) *Api {
+	return &Api{VkApi: &vk.Api{AccessToken: token}}
+}
+
 func NewWithTokenFile(tokenFilePath string) (*Api, error) {
-	va := new(vk.Api)
+	token := ""
 
 	f, e := os.OpenFile(tokenFilePath, os.O_RDONLY, 0777)
 	if e == nil {
@@ -37,13 +41,12 @@ func NewWithTokenFile(tokenFilePath string) (*Api, error) {
 			return nil, e
 		}
 		f.Close()
-		va.AccessToken = string(bts)
+		token = string(bts)
 	} else {
 		return nil, e
 	}
 
-	return &Api{VkApi: va}, nil
-
+	return NewWithToken(token), nil
 }
 
 func NewUtils(api *vk.Api) *Api {
@@ -55,6 +58,7 @@ func (api *Api) SetDebug(debug bool) {
 	if debug {
 		log.SetFlags(log.LstdFlags | log.Llongfile)
 	}
+	api.VkApi.SetDebug(debug)
 	api.debug = debug
 }
 

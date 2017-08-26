@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+
 	"github.com/fatih/color"
 	vk "github.com/zhuharev/vk"
-	"net/url"
 )
 
 func (api *Api) WallGet(ownerId int, filter ...url.Values) ([]*Post, error) {
@@ -240,7 +241,7 @@ func (api *Api) WallRepost(ot ObjectType, ownerId int, objectId int, params ...u
 	return wpr.PostId, nil
 }
 
-func (a *Api) WallDelete(ownerId int, postId int, params ...url.Values) error {
+func (api *Api) WallDelete(ownerId int, postId int, params ...url.Values) error {
 	var (
 		param = url.Values{}
 	)
@@ -249,7 +250,7 @@ func (a *Api) WallDelete(ownerId int, postId int, params ...url.Values) error {
 	}
 	param.Set("owner_id", fmt.Sprint(ownerId))
 	param.Set("post_id", fmt.Sprint(postId))
-	bts, e := a.VkApi.Request(vk.METHOD_WALL_DELETE, param)
+	bts, e := api.VkApi.Request(vk.METHOD_WALL_DELETE, param)
 	if e != nil {
 		return e
 	}
@@ -258,4 +259,71 @@ func (a *Api) WallDelete(ownerId int, postId int, params ...url.Values) error {
 		return e
 	}
 	return nil
+}
+
+// ResponseRepost represent repost response
+type ResponseRepost struct {
+	Items    []Post  `json:"items"`
+	Profiles []User  `json:"profiles"`
+	Groups   []Group `json:"groups"`
+}
+
+// WallGetRepostsIds return ids about wall reposts
+func (api *Api) WallGetRepostsIds(ownerID int, postID int, params ...url.Values) (rr ResponseRepost, err error) {
+	type RRWrap struct {
+		Resp ResponseRepost `json:"response"`
+	}
+	var rrw RRWrap
+	param := setToUrlValues("owner_id", ownerID, params...)
+	param = setToUrlValues("post_id", postID, param)
+	bts, err := api.VkApi.Request(vk.METHOD_WALL_GET_REPOSTS, param)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bts, &rrw)
+	if err != nil {
+		return
+	}
+	return rrw.Resp, nil
+}
+
+// TODO
+// WallGetReposts return info about wall reposts
+func (api *Api) WallGetReposts(ownerID int, postID int, params ...url.Values) (rr ResponseRepost, err error) {
+	type RRWrap struct {
+		Resp ResponseRepost `json:"response"`
+	}
+	var rrw RRWrap
+	param := setToUrlValues("owner_id", ownerID, params...)
+	param = setToUrlValues("post_id", postID, param)
+	bts, err := api.VkApi.Request(vk.METHOD_WALL_GET_REPOSTS, param)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bts, &rrw)
+	if err != nil {
+		return
+	}
+	return rrw.Resp, nil
+}
+
+func (api *Api) WallGetByID(postID string) (p Post, err error) {
+	type Resp struct {
+		Response []Post `json:"response"`
+	}
+	var r Resp
+
+	param := setToUrlValues("posts", postID)
+	bts, err := api.VkApi.Request(vk.METHOD_WALL_GET_BY_ID, param)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bts, &r)
+	if err != nil {
+		return
+	}
+	if len(r.Response) != 1 {
+		return Post{}, fmt.Errorf("not found")
+	}
+	return r.Response[0], nil
 }

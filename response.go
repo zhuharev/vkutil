@@ -56,6 +56,14 @@ type Comment struct {
 	Attachments    []Attachment `json:"attachments"`
 }
 
+type ResponseComments struct {
+	Response struct {
+		Items []Comment `json:"items"`
+		Count int       `json:"count"`
+	} `json:"response"`
+	ResponseError
+}
+
 type ResponseCommentsList struct {
 	Response []*Comment `json:"response"`
 	ResponseError
@@ -91,12 +99,14 @@ type ResponseFriendsGetMutual struct {
 }
 
 type RespUnreadMessages struct {
-	Count         int `json:"count"`
-	UnreadDialogs int `json:"unread_dialogs"`
-	Items         []struct {
-		Unread  int     `json:"unread"`
-		Message Message `json:"message"`
-	}
+	Count         int      `json:"count"`
+	UnreadDialogs int      `json:"unread_dialogs"`
+	Items         []Dialog `json:"items"`
+}
+
+type Dialog struct {
+	Unread  int     `json:"unread"`
+	Message Message `json:"message"`
 }
 
 type Message struct {
@@ -174,6 +184,18 @@ func ParseUsersResponse(data []byte) (users []User, err error) {
 	return r.Response, nil
 }
 
+func ParseDialogsResponse(data []byte) (ms []Dialog, err error) {
+	var r struct {
+		RespUnreadMessages `json:"response"`
+		ResponseError
+	}
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		return
+	}
+	return r.RespUnreadMessages.Items, nil
+}
+
 func ParseMessagesResponse(data []byte) (ms []Message, err error) {
 	var r ResponseMessages
 	err = json.Unmarshal(data, &r)
@@ -183,19 +205,16 @@ func ParseMessagesResponse(data []byte) (ms []Message, err error) {
 	return r.Response.Items, nil
 }
 
-func ParseUnreadMessagesResponse(data []byte) (ms []Message, err error) {
+func ParseUnreadMessagesResponse(data []byte) (ms []Dialog, err error) {
 	var r struct {
 		RespUnreadMessages `json:"response"`
 		ResponseError
 	}
 	err = json.Unmarshal(data, &r)
 	if err != nil {
-		return []Message{}, err
+		return []Dialog{}, err
 	}
-	for i := range r.Items {
-		ms = append(ms, r.Items[i].Message)
-	}
-	return ms, nil
+	return r.RespUnreadMessages.Items, nil
 }
 
 func ParseResponseUserWithCount(data []byte) (users []User, cnt int, e error) {

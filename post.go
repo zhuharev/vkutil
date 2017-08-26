@@ -8,7 +8,13 @@ type Post struct {
 	AccessKey string    `json:"access_key"`
 	Likes     struct {
 		Count int `json:"count"`
-	}
+	} `json:"count"`
+	Views struct {
+		Count int `json:"count"`
+	} `json:"views"`
+	Reposts struct {
+		Count int `json:"count"`
+	} `json:"reposts"`
 	Text     string `json:"text"`
 	PostType string `json:"post_type"`
 

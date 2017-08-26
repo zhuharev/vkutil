@@ -34,6 +34,7 @@ type (
 		City                   GeoPlace     `json:"city,omitempty" xorm:"-"`
 		Country                GeoPlace     `json:"country,omitempty" xorm:"-"`
 		PhotoId                string       `json:"photo_id,omitempty"`
+		Photo                  string       `json:"photo,omitempty"`
 		Photo50                string       `json:"photo_50,omitempty"`
 		Photo100               string       `json:"photo_100,omitempty"`
 		Photo200               string       `json:"photo_200,omitempty"`
