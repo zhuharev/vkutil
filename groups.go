@@ -10,13 +10,73 @@ import (
 )
 
 type Group struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-
+	ID         int    `json:"id"`
+	Name       string `json:"name"`
 	ScreenName string `json:"screen_name"`
 	IsClosed   int    `json:"is_closed"`
-
-	MembersCount int `json:"members_count"`
+	Type       string `json:"type"`
+	IsAdmin    int    `json:"is_admin"`
+	IsMember   int    `json:"is_member"`
+	City       struct {
+		ID    int    `json:"id"`
+		Title string `json:"title"`
+	} `json:"city"`
+	Country struct {
+		ID    int    `json:"id"`
+		Title string `json:"title"`
+	} `json:"country"`
+	Place struct {
+		ID         int     `json:"id"`
+		Title      string  `json:"title"`
+		Latitude   float64 `json:"latitude"`
+		Longitude  float64 `json:"longitude"`
+		Created    int     `json:"created"`
+		Icon       string  `json:"icon"`
+		GroupID    int     `json:"group_id"`
+		GroupPhoto string  `json:"group_photo"`
+		Checkins   int     `json:"checkins"`
+		Updated    int     `json:"updated"`
+		Type       int     `json:"type"`
+		Country    int     `json:"country"`
+		City       int     `json:"city"`
+	} `json:"place"`
+	Description  string `json:"description"`
+	WikiPage     string `json:"wiki_page"`
+	MembersCount int    `json:"members_count"`
+	Counters     struct {
+		Topics int `json:"topics"`
+		Videos int `json:"videos"`
+	} `json:"counters"`
+	CanPost        int    `json:"can_post"`
+	CanSeeAllPosts int    `json:"can_see_all_posts"`
+	Activity       string `json:"activity"`
+	Status         string `json:"status"`
+	Contacts       []struct {
+		UserID int    `json:"user_id"`
+		Desc   string `json:"desc"`
+	} `json:"contacts"`
+	Links []struct {
+		ID        int    `json:"id"`
+		URL       string `json:"url"`
+		Name      string `json:"name"`
+		Desc      string `json:"desc"`
+		Photo50   string `json:"photo_50"`
+		Photo100  string `json:"photo_100"`
+		EditTitle int    `json:"edit_title,omitempty"`
+	} `json:"links"`
+	Verified int    `json:"verified"`
+	Site     string `json:"site"`
+	Cover    struct {
+		Enabled int `json:"enabled"`
+		Images  []struct {
+			URL    string `json:"url"`
+			Width  int    `json:"width"`
+			Height int    `json:"height"`
+		} `json:"images"`
+	} `json:"cover"`
+	Photo50  string `json:"photo_50"`
+	Photo100 string `json:"photo_100"`
+	Photo200 string `json:"photo_200"`
 }
 
 func (g Group) Closed() bool {

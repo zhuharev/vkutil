@@ -84,11 +84,11 @@ func (api *Api) UtilsWallGetAll(ownerId int) (posts []*Post, e error) {
 
 		color.Green("LEN %d", len(tposts))
 
-		if len(tposts) < 2500 {
+		if len(tposts) < 2000 {
 			break
 		}
 
-		offset += 2500
+		offset += 2000
 	}
 
 	return
@@ -109,7 +109,7 @@ func (a *Api) utilsWallGetTwoThousandPost(ownerId int, offsets ...int) ([]*Post,
 	var offs = %d;
 	var own = %d;
 var a = API.wall.get({owner_id:own,count:100,offset:offs,filter:"all"}).items;
-while(cnt<25) {
+while(cnt<20) {
 a = a+ API.wall.get({owner_id:own,count:100,offset:offs+(100*cnt),filter:"all"}).items;
 cnt = cnt+1;
 }

@@ -21,6 +21,8 @@ type Post struct {
 	CopyHistory []Post     `json:"copy_history"`
 	PostSource  PostSource `json:"post_source"`
 
+	SignerID int `json:"signer_id"`
+
 	Attachments []Attachment `json:"attachments"`
 }
 

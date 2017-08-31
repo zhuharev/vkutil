@@ -8,6 +8,26 @@ import (
 	"github.com/zhuharev/vk"
 )
 
+// Topic board item
+type Topic struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Created   EpochTime `json:"created"`
+	CreatedBy int       `json:"created_by"`
+	Updated   EpochTime `json:"upadted"`
+	UpdatedBy int       `json:"updated_by"`
+	IsClosed  int       `json:"is_closed"`
+	Comments  int       `json:"comments"`
+}
+
+// ResponseTopics represent topic items
+type ResponseTopics struct {
+	Resp struct {
+		Count int     `json:"count"`
+		Items []Topic `json:"items"`
+	} `json:"response"`
+}
+
 // BoardGetCommetns returns board items
 func (api *Api) BoardGetCommetns(groupID, topicID int, args ...url.Values) ([]Comment, error) {
 	params := setToUrlValues("group_id", groupID, args...)
