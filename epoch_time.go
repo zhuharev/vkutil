@@ -24,3 +24,7 @@ func (t *EpochTime) UnmarshalJSON(s []byte) error {
 	*(*time.Time)(t) = time.Unix(q, 0)
 	return err
 }
+
+func (t EpochTime) ToTime() time.Time {
+	return time.Time(t)
+}

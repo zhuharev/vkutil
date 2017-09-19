@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/fatih/color"
 	vk "github.com/zhuharev/vk"
@@ -175,10 +179,44 @@ return a;`
 	return r.Response, nil
 }
 
+func (api *Api) uploadAttachments(groupID int, imageURLs []string) ([]string, error) {
+	var (
+		resAttachments []string
+
+		attachments []io.Reader
+	)
+
+	for _, imgURL := range imageURLs {
+		resp, err := http.Get(imgURL)
+		if err != nil {
+			return nil, err
+		}
+		attachments = append(attachments, resp.Body)
+	}
+
+	for _, img := range attachments {
+		photo, err := api.PhotosUploadWall(groupID, img)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		// close if http connection or opened file
+		if closer, ok := img.(io.ReadCloser); ok {
+			closer.Close()
+		}
+
+		resAttachments = append(resAttachments, fmt.Sprintf("photo%d_%d", photo.OwnerId, photo.Id))
+	}
+
+	return resAttachments, nil
+}
+
 type OptsWallPost struct {
 	OwnerId   int
 	Message   string
 	FromGroup bool
+	ImageURLs []string
 }
 
 func (api *Api) WallPost(opts OptsWallPost, filter ...url.Values) (int, error) {
@@ -190,6 +228,14 @@ func (api *Api) WallPost(opts OptsWallPost, filter ...url.Values) (int, error) {
 	vals.Set("message", opts.Message)
 	if opts.FromGroup {
 		vals.Set("from_group", "1")
+	}
+
+	if len(opts.ImageURLs) != 0 {
+		attachments, err := api.uploadAttachments(opts.OwnerId, opts.ImageURLs)
+		if err != nil {
+			return 0, err
+		}
+		vals.Set("attachments", strings.Join(attachments, ","))
 	}
 
 	resp, err := api.VkApi.Request(vk.METHOD_WALL_POST, vals)

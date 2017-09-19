@@ -56,11 +56,13 @@ type Comment struct {
 	Attachments    []Attachment `json:"attachments"`
 }
 
+type RespComments struct {
+	Items []Comment `json:"items"`
+	Count int       `json:"count"`
+}
+
 type ResponseComments struct {
-	Response struct {
-		Items []Comment `json:"items"`
-		Count int       `json:"count"`
-	} `json:"response"`
+	Response RespComments `json:"response"`
 	ResponseError
 }
 
@@ -110,13 +112,13 @@ type Dialog struct {
 }
 
 type Message struct {
-	Id        int    `json:"id"`
-	Date      int    `json:"date"`
-	Out       int    `json:"out"`
-	UserId    int    `json:"user_id"`
-	ReadState int    `json:"read_state"`
-	Title     string `json:"title"`
-	Body      string `json:"body"`
+	Id        int       `json:"id"`
+	Date      EpochTime `json:"date"`
+	Out       int       `json:"out"`
+	UserId    int       `json:"user_id"`
+	ReadState int       `json:"read_state"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
 }
 
 type RespUserWithCount struct {

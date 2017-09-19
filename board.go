@@ -14,18 +14,20 @@ type Topic struct {
 	Title     string    `json:"title"`
 	Created   EpochTime `json:"created"`
 	CreatedBy int       `json:"created_by"`
-	Updated   EpochTime `json:"upadted"`
+	Updated   EpochTime `json:"updated"`
 	UpdatedBy int       `json:"updated_by"`
 	IsClosed  int       `json:"is_closed"`
 	Comments  int       `json:"comments"`
 }
 
+type RespTopic struct {
+	Count int     `json:"count"`
+	Items []Topic `json:"items"`
+}
+
 // ResponseTopics represent topic items
 type ResponseTopics struct {
-	Resp struct {
-		Count int     `json:"count"`
-		Items []Topic `json:"items"`
-	} `json:"response"`
+	Resp RespTopic `json:"response"`
 }
 
 // BoardGetCommetns returns board items

@@ -196,6 +196,8 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 		ids = arrIntToStr(idsi.([]int))
 	case int:
 		ids = []string{fmt.Sprint(idsi.(int))}
+	case int64:
+		ids = []string{fmt.Sprint(idsi.(int64))}
 	case map[int]struct{}:
 		for k := range idsi.(map[int]struct{}) {
 			ids = append(ids, fmt.Sprint(k))
