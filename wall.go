@@ -180,6 +180,11 @@ return a;`
 }
 
 func (api *Api) uploadAttachments(groupID int, imageURLs []string) ([]string, error) {
+
+	if groupID < 0 {
+		groupID = -groupID
+	}
+
 	var (
 		resAttachments []string
 
