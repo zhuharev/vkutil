@@ -113,6 +113,7 @@ type Dialog struct {
 
 type Message struct {
 	Id        int       `json:"id"`
+	ChatID    int       `json:"chat_id"`
 	Date      EpochTime `json:"date"`
 	Out       int       `json:"out"`
 	UserId    int       `json:"user_id"`
