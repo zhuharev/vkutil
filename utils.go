@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -59,6 +60,9 @@ func uniqStrArr(arr []string) []string {
 	}
 	arr = []string{}
 	for k := range m {
+		if k == "" || k == "0" || IsZeroOfUnderlyingType(m) {
+			continue
+		}
 		arr = append(arr, k)
 	}
 	return arr
@@ -151,4 +155,9 @@ func ParseBoardURL(uri string) (groupID, topicID, postID int, err error) {
 		return
 	}
 	return
+}
+
+// IsZeroOfUnderlyingType check is x zero value
+func IsZeroOfUnderlyingType(x interface{}) bool {
+	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
 }
