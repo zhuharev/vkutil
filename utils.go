@@ -159,5 +159,5 @@ func ParseBoardURL(uri string) (groupID, topicID, postID int, err error) {
 
 // IsZeroOfUnderlyingType check is x zero value
 func IsZeroOfUnderlyingType(x interface{}) bool {
-	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
+	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }
