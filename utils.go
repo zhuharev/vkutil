@@ -60,7 +60,7 @@ func uniqStrArr(arr []string) []string {
 	}
 	arr = []string{}
 	for k := range m {
-		if k == "" || k == "0" || IsZeroOfUnderlyingType(m) {
+		if k == "" || k == "0" {
 			continue
 		}
 		arr = append(arr, k)
