@@ -1,5 +1,7 @@
 package vkutil
 
+import "fmt"
+
 //"fmt"
 
 type Attachment struct {
@@ -11,6 +13,13 @@ type Attachment struct {
 		Photo807  string `json:"photo_807"`
 		Photo1280 string `json:"photo_1280"`
 	} `json:"photo"`
+}
+
+func (a Attachment) VKUrlResourse(ownerID int) string {
+	if a.IsPhoto() {
+		return fmt.Sprintf("photo%d_%d", ownerID, a.ID)
+	}
+	return ""
 }
 
 func (a Attachment) ToPhoto() (*Photo, error) {

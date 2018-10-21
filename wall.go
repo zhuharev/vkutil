@@ -378,3 +378,49 @@ func (api *Api) WallGetByID(postID string) (p Post, err error) {
 	}
 	return r.Response[0], nil
 }
+
+func (api *Api) WallCreateComment(ownerID, postID int, fromGroup bool,
+	message string, replyToComment int, attachments []string, params ...url.Values) (int, error) {
+	param := setToUrlValues("owner_id", ownerID)
+	param = setToUrlValues("post_id", postID, param)
+	param = setToUrlValues("from_group", fromGroup, param)
+	param = setToUrlValues("message", message, param)
+	param = setToUrlValues("reply_to_comment", replyToComment, param)
+	param = setToUrlValues("attachments", strings.Join(attachments, ","), param)
+
+	bts, err := api.VkApi.Request(vk.METHOD_WALL_CREATE_COMMENT, param)
+	if err != nil {
+		return 0, err
+	}
+	log.Printf("%s", bts)
+	type Resp struct {
+		Response struct {
+			CommentID int `json:"comment_id"`
+		} `json:"response"`
+	}
+	var r Resp
+	err = json.Unmarshal(bts, &r)
+	if err != nil {
+		return 0, err
+	}
+
+	return r.Response.CommentID, nil
+}
+
+func (api *Api) WallGetComments(ownerID, postID int, args ...url.Values) ([]Comment, error) {
+	params := setToUrlValues("owner_id", ownerID, args...)
+	params = setToUrlValues("post_id", postID, params)
+	params = setToUrlValues("count", 100, params)
+
+	bts, err := api.VkApi.Request(vk.METHOD_WALL_GET_COMMENTS, params)
+	if err != nil {
+		return nil, err
+	}
+	//	log.Println(string(bts))
+	var r ResponseComments
+	err = json.Unmarshal(bts, &r)
+	if err != nil {
+		return nil, err
+	}
+	return r.Response.Items, nil
+}

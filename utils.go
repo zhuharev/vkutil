@@ -110,13 +110,23 @@ func setToUrlValues(key string, val interface{}, params ...url.Values) url.Value
 	}
 	switch i := val.(type) {
 	case int, int64:
-		param.Set(key, fmt.Sprint(i))
+		if i != 0 {
+			param.Set(key, fmt.Sprint(i))
+		}
 	case string:
-		param.Set(key, i)
+		if i != "" {
+			param.Set(key, i)
+		}
 	case []string:
 		param.Set(key, strings.Join(i, ","))
 	case []int:
 		param.Set(key, strings.Join(arrIntToStr(i), ","))
+	case bool:
+		fb := "1"
+		if !i {
+			fb = "0"
+		}
+		param.Set(key, fb)
 	}
 	return param
 }

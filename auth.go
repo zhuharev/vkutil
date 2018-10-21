@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 
 	"github.com/fatih/color"
@@ -135,6 +136,8 @@ func (api *Api) DirectAuth(login, password string) error {
 	if e != nil {
 		return e
 	}
+
+	log.Printf("%s", bts)
 
 	e = json.Unmarshal(bts, &tr)
 	if e != nil {
