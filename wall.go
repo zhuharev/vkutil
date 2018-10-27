@@ -12,6 +12,7 @@ import (
 
 	"github.com/fatih/color"
 	vk "github.com/zhuharev/vk"
+	"github.com/zhuharev/vkutil/wall"
 )
 
 func (api *Api) WallGet(ownerId int, filter ...url.Values) ([]*Post, error) {
@@ -423,4 +424,8 @@ func (api *Api) WallGetComments(ownerID, postID int, args ...url.Values) ([]Comm
 		return nil, err
 	}
 	return r.Response.Items, nil
+}
+
+func (api *Api) WallEdit(ownerID int, postID int, message string, args ...url.Values) error {
+	return wall.Edit(api.API, ownerID, postID, message, args...)
 }

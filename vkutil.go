@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/zhuharev/vk"
+	"github.com/zhuharev/vkutil/structs"
 	//log "gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -20,38 +19,41 @@ type Api struct {
 	VkApi      *vk.Api
 	StdinAllow bool
 	debug      bool
+	*structs.API
 }
 
 func New() *Api {
 	va := new(vk.Api)
-	return &Api{VkApi: va}
+	return &Api{VkApi: va, API: &structs.API{VkAPI: va}}
 }
 
 func NewWithToken(token string) *Api {
-	return &Api{VkApi: &vk.Api{AccessToken: token}}
+	api := New()
+	api.VkApi.AccessToken = token
+	return api
 }
 
-func NewWithTokenFile(tokenFilePath string) (*Api, error) {
-	token := ""
-
-	f, e := os.OpenFile(tokenFilePath, os.O_RDONLY, 0777)
-	if e == nil {
-		bts, e := ioutil.ReadAll(f)
-		if e != nil {
-			return nil, e
-		}
-		f.Close()
-		token = string(bts)
-	} else {
-		return nil, e
-	}
-
-	return NewWithToken(token), nil
-}
-
-func NewUtils(api *vk.Api) *Api {
-	return &Api{VkApi: api}
-}
+// func NewWithTokenFile(tokenFilePath string) (*Api, error) {
+// 	token := ""
+//
+// 	f, e := os.OpenFile(tokenFilePath, os.O_RDONLY, 0777)
+// 	if e == nil {
+// 		bts, e := ioutil.ReadAll(f)
+// 		if e != nil {
+// 			return nil, e
+// 		}
+// 		f.Close()
+// 		token = string(bts)
+// 	} else {
+// 		return nil, e
+// 	}
+//
+// 	return NewWithToken(token), nil
+// }
+//
+// func NewUtils(api *vk.Api) *Api {
+// 	return &Api{VkApi: api}
+// }
 
 // SetDebug enable loggin and set log flags longfile
 func (api *Api) SetDebug(debug bool) {

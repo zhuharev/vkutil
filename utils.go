@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/zhuharev/vk"
+	"github.com/zhuharev/vkutil/util"
 )
 
 func (api *Api) UtilsResolveScreenName(name string) (ObjectType, int, error) {
@@ -37,10 +38,7 @@ func (api *Api) UtilsResolveScreenName(name string) (ObjectType, int, error) {
 // vkutil utils
 
 func arrIntToStr(arr []int) (sarr []string) {
-	for _, v := range arr {
-		sarr = append(sarr, fmt.Sprint(v))
-	}
-	return
+	return util.ArrIntToStr(arr)
 }
 
 func arrStrToInt(arr []string) (iarr []int) {
@@ -104,31 +102,7 @@ func debug(f string, args ...interface{}) {
 }
 
 func setToUrlValues(key string, val interface{}, params ...url.Values) url.Values {
-	param := url.Values{}
-	if len(params) > 0 {
-		param = params[0]
-	}
-	switch i := val.(type) {
-	case int, int64:
-		if i != 0 {
-			param.Set(key, fmt.Sprint(i))
-		}
-	case string:
-		if i != "" {
-			param.Set(key, i)
-		}
-	case []string:
-		param.Set(key, strings.Join(i, ","))
-	case []int:
-		param.Set(key, strings.Join(arrIntToStr(i), ","))
-	case bool:
-		fb := "1"
-		if !i {
-			fb = "0"
-		}
-		param.Set(key, fb)
-	}
-	return param
+	return util.SetToUrlValues(key, val, params...)
 }
 
 func ParseCallbackURL(uri string) (token string, err error) {
