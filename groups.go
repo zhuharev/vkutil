@@ -269,3 +269,14 @@ func (a *Api) GroupsSearch(q string, params ...url.Values) ([]Group, error) {
 
 	return r.Resp.Items, nil
 }
+
+func (api *Api) GroupIsMember(publicID, userID int) (bool, error) {
+	param := setToUrlValues("group_id", publicID)
+	param = setToUrlValues("user_id", userID, param)
+	var r ResponseInt
+	err := api.RequestTyped(&r, vk.METHOD_GROUPS_IS_MEMBER)
+	if err != nil {
+		return false, err
+	}
+	return r.Response == 1, nil
+}

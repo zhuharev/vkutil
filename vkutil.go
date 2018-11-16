@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/zhuharev/vk"
 	"github.com/zhuharev/vkutil/structs"
@@ -105,4 +106,12 @@ func (api *Api) GroupsGetMembersCount(groupId int) (int, error) {
 		return 0, errors.New(r.Error.Msg)
 	}
 	return r.Resp.Count, nil
+}
+
+func (api *Api) RequestTyped(resp interface{}, method string, args ...url.Values) error {
+	data, err := api.VkAPI.Request(method, args...)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, resp)
 }
