@@ -274,7 +274,7 @@ func (api *Api) GroupIsMember(publicID, userID int) (bool, error) {
 	param := setToUrlValues("group_id", publicID)
 	param = setToUrlValues("user_id", userID, param)
 	var r ResponseInt
-	err := api.RequestTyped(&r, vk.METHOD_GROUPS_IS_MEMBER)
+	err := api.RequestTyped(&r, vk.METHOD_GROUPS_IS_MEMBER, param)
 	if err != nil {
 		return false, err
 	}
