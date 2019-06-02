@@ -359,13 +359,13 @@ func (api *Api) WallGetReposts(ownerID int, postID int, params ...url.Values) (r
 	return rrw.Resp, nil
 }
 
-func (api *Api) WallGetByID(postID string) (p Post, err error) {
+func (api *Api) WallGetByID(postID string, params ...url.Values) (p Post, err error) {
 	type Resp struct {
 		Response []Post `json:"response"`
 	}
 	var r Resp
 
-	param := setToUrlValues("posts", postID)
+	param := setToUrlValues("posts", postID, params...)
 	bts, err := api.VkApi.Request(vk.METHOD_WALL_GET_BY_ID, param)
 	if err != nil {
 		return

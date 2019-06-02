@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
 	"github.com/zhuharev/vk"
 )
+
+func (api *Api) MessagesGetConversations() error {
+	resp, err := api.VkAPI.Request("messages.getConversations")
+	log.Printf("%s", resp)
+	return err
+}
 
 func (api *Api) MessagesGet(params ...url.Values) ([]Message, error) {
 	rparams := url.Values{}
@@ -28,7 +35,9 @@ func (api *Api) MessagesSend(uid int, message string,
 	if len(params) == 1 {
 		rparams = params[0]
 	}
-	rparams.Set("user_id", fmt.Sprint(uid))
+	if uid != 0 {
+		rparams.Set("user_id", fmt.Sprint(uid))
+	}
 	rparams.Set("message", message)
 	resp, err := api.VkApi.Request(vk.METHOD_MESSAGES_SEND, rparams)
 	if err != nil {
