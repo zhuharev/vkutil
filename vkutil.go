@@ -23,15 +23,70 @@ type Api struct {
 	*structs.API
 }
 
-func New() *Api {
+func New(opts ...Opt) *Api {
 	va := new(vk.Api)
 	return &Api{VkApi: va, API: &structs.API{VkAPI: va}}
+}
+
+type Opt func(*Api)
+
+func Token(token string) Opt {
+	return func(a *Api) {
+		a.VkApi.AccessToken = token
+	}
+}
+
+func ClientCred(id int, secret string) Opt {
+	return func(a *Api) {
+		a.VkApi.ClientId = id
+		a.VkAPI.ClientSecret = secret
+	}
 }
 
 func NewWithToken(token string) *Api {
 	api := New()
 	api.VkApi.AccessToken = token
 	return api
+}
+
+func (api *Api) AccessTokenURL(redirectURI, code string) string {
+	return fmt.Sprintf(
+		"https://oauth.vk.com/access_token?client_id=%d&client_secret=%s&redirect_uri=%s&code=%s",
+		api.VkApi.ClientId,
+		api.VkApi.ClientSecret,
+		redirectURI,
+		code,
+	)
+}
+
+func (api *Api) UsersGetOne(id int, args ...url.Values) (*User, error) {
+	users, err := api.UsersGet(id, args...)
+	if err != nil {
+		return nil, err
+	}
+	if len(users) != 1 {
+		return nil, errors.New("unexpected vk response")
+	}
+	return &users[0], nil
+}
+
+func (api *Api) UserByCode(redirectURI, code string) (*User, error) {
+	cli := api.VkApi.HTTPClient()
+	resp, err := cli.Get(api.AccessTokenURL(redirectURI, code))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	var at struct {
+		AccessToken string `json:"access_token"`
+		UserID      int    `json:"user_id"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&at)
+	if err != nil {
+		return nil, err
+	}
+
+	return api.UsersGetOne(at.UserID, url.Values{"fields": {"photo"}})
 }
 
 // func NewWithTokenFile(tokenFilePath string) (*Api, error) {
