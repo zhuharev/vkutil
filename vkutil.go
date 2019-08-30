@@ -25,7 +25,13 @@ type Api struct {
 
 func New(opts ...Opt) *Api {
 	va := new(vk.Api)
-	return &Api{VkApi: va, API: &structs.API{VkAPI: va}}
+	a := &Api{VkApi: va, API: &structs.API{VkAPI: va}}
+
+	for _, opt := range opts {
+		opt(a)
+	}
+
+	return a
 }
 
 type Opt func(*Api)
