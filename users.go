@@ -40,6 +40,8 @@ type (
 		Photo200               string       `json:"photo_200,omitempty"`
 		PhotoMax               string       `json:"photo_max,omitempty"`
 		Photo200Orig           string       `json:"photo_200_orig,omitempty"`
+		Photo400               string       `json:"photo_400"`
+		Photo400Orig           string       `json:"photo_400_orig"`
 		PhotoMaxOrig           string       `json:"photo_max_orig,omitempty"`
 		HasMobile              Bool         `json:"has_mobile,omitempty" xorm:"-"`
 		Online                 Bool         `json:"online,omitempty" xorm:"-"`
