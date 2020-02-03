@@ -36,6 +36,16 @@ func (api *Api) WallGet(ownerId int, filter ...url.Values) ([]*Post, error) {
 	return r.Response.Items, nil
 }
 
+// WallGetViews return views by post IDs
+func (api *Api) WallGetViews(postIDs []string) ([]int, error) {
+	code := fmt.Sprintf(`return API.wall.getById({posts:"%s"})@.views@.count;`, strings.Join(postIDs, ","))
+	bts, err := api.Execute(code)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIntsResponse(bts)
+}
+
 func (api *Api) UtilsWallPostCount(ownerId int) (count int, e error) {
 	fcode := `return API.wall.get({owner_id:%d,count:1}).count;`
 	bts, e := api.Execute(fcode)
