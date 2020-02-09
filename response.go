@@ -190,6 +190,18 @@ func ParseIntsResponse(data []byte) ([]int, error) {
 	return r.Response, nil
 }
 
+func ParseIDViewsResponse(data []byte) ([]IDViews, error) {
+	var r IDViewsResponse
+	e := json.Unmarshal(data, &r)
+	if e != nil {
+		return nil, e
+	}
+	if r.Error.Code != 0 {
+		return nil, fmt.Errorf("%s", r.Error.Msg)
+	}
+	return r.Response, nil
+}
+
 func ParseUsersResponse(data []byte) (users []User, err error) {
 	var r ResponseUsers
 	err = json.Unmarshal(data, &r)
@@ -250,5 +262,16 @@ type OutRequestDeleted struct {
 
 type IntResponse struct {
 	Response []int
+	ResponseError
+}
+
+type IDViews struct {
+	ID    int
+	Views int
+	Onwer int
+}
+
+type IDViewsResponse struct {
+	Response []IDViews
 	ResponseError
 }
