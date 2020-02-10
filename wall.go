@@ -60,7 +60,7 @@ func (api *Api) WallGetViews(postIDs []string) ([]int, error) {
 	for _, postID := range postIDs {
 		var postViews int
 		for _, v := range views {
-			if postID == fmt.Sprintf("%d_%d", v.Onwer, v.ID) {
+			if postID == fmt.Sprintf("%d_%d", v.Owner, v.ID) {
 				postViews = v.Views
 			}
 		}

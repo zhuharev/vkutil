@@ -268,7 +268,7 @@ type IntResponse struct {
 type IDViews struct {
 	ID    int
 	Views int
-	Onwer int
+	Owner int
 }
 
 type IDViewsResponse struct {
