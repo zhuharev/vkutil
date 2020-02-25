@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/url"
 
@@ -87,9 +88,22 @@ func (api *Api) UserByCode(redirectURI, code string) (*User, error) {
 		AccessToken string `json:"access_token"`
 		UserID      int    `json:"user_id"`
 	}
-	err = json.NewDecoder(resp.Body).Decode(&at)
+
+	bts, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	if api.debug {
+		log.Printf("response access token url: %s", bts)
+	}
+
+	err = json.Unmarshal(bts, &at)
+	if err != nil {
+		return nil, err
+	}
+
+	if at.UserID == 0 {
+		return nil, fmt.Errorf("empty user id in response")
 	}
 
 	return api.UsersGetOne(at.UserID, url.Values{"fields": {"photo"}})
