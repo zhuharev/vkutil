@@ -157,21 +157,21 @@ func (b Bdate) Mounth() (int, bool) {
 	return b.getPart(1)
 }
 
-func (bit Bool) UnmarshalJSON(data []byte) error {
+func (bit *Bool) UnmarshalJSON(data []byte) error {
 	asString := string(data)
 	if asString == "1" || asString == "true" {
-		bit = true
+		*bit = true
 	} else if asString == "0" || asString == "false" {
-		bit = false
+		*bit = false
 	} else {
 		return errors.New(fmt.Sprintf("Boolean unmarshal error: invalid input %s", asString))
 	}
 	return nil
 }
 
-func (bit Bool) FromDB(data []byte) error {
+func (bit *Bool) FromDB(data []byte) error {
 	if string(data) == "1" {
-		bit = true
+		*bit = true
 	}
 	return nil
 }

@@ -35,8 +35,8 @@ type ResponseTopics struct {
 	Resp RespTopic `json:"response"`
 }
 
-// BoardGetCommetns returns board items
-func (api *Api) BoardGetCommetns(groupID, topicID int, args ...url.Values) ([]Comment, error) {
+// BoardGetComments returns board items
+func (api *Api) BoardGetComments(ctx context.Context, groupID, topicID int, args ...url.Values) ([]Comment, error) {
 	params := setToUrlValues("group_id", groupID, args...)
 	params = setToUrlValues("topic_id", topicID, params)
 	//params = setToUrlValues("sort", "desc", params)
@@ -52,6 +52,30 @@ func (api *Api) BoardGetCommetns(groupID, topicID int, args ...url.Values) ([]Co
 		return nil, err
 	}
 	return r.Response.Items, nil
+}
+
+func (api *Api) BoardGetAllComments(ctx context.Context, groupID int, topicID int) ([]Comment, error) {
+	var (
+		count  = 100
+		offset = 0
+		result []Comment
+	)
+	for {
+		params := setToUrlValues("count", count)
+		params = setToUrlValues("offset", offset, params)
+
+		comments, err := api.BoardGetComments(ctx, groupID, topicID, params)
+		if err != nil {
+			return nil, err
+		}
+		offset += len(comments)
+		result = append(result, comments...)
+
+		if len(comments) < count {
+			break
+		}
+	}
+	return result, nil
 }
 
 func (api *Api) BoardGetAllTopics(ctx context.Context, groupID int) ([]Topic, error) {
