@@ -120,10 +120,10 @@ type Poll struct {
 	AnswerIds []int  `json:"answer_ids"`
 	EmbedHash string `json:"embed_hash"`
 	Answers   []struct {
-		ID    int    `json:"id"`
-		Rate  int    `json:"rate"`
-		Text  string `json:"text"`
-		Votes int    `json:"votes"`
+		ID    int     `json:"id"`
+		Rate  float64 `json:"rate"`
+		Text  string  `json:"text"`
+		Votes int     `json:"votes"`
 	} `json:"answers"`
 	Background struct {
 		Angle  int    `json:"angle"`
