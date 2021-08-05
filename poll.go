@@ -131,8 +131,8 @@ type Poll struct {
 		ID     int    `json:"id"`
 		Name   string `json:"name"`
 		Points []struct {
-			Color    string `json:"color"`
-			Position int    `json:"position"`
+			Color    string  `json:"color"`
+			Position float64 `json:"position"`
 		} `json:"points"`
 		Type string `json:"type"`
 	} `json:"background"`
