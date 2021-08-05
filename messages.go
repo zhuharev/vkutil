@@ -1,6 +1,7 @@
 package vkutil
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -114,4 +115,23 @@ func (api *Api) MessagesSetActivity(udserID int, params ...url.Values) error {
 	}
 	_, err = ParseIntResponse(resp)
 	return err
+}
+
+func (api *Api) IsMessagesFromGroupAllowed(ctx context.Context, groupID, userID int) (bool, error) {
+	rparams := url.Values{}
+	rparams.Set("group_id", toString(groupID))
+	rparams.Set("user_id", toString(userID))
+
+	var res struct {
+		Response struct {
+			IsAllowed int `json:"is_allowed"`
+		}
+	}
+
+	err := api.VkApi.RequestTypedContext(ctx, vk.MethodMessageFromGroupAllowed, rparams, &res)
+	if err != nil {
+		return false, err
+	}
+
+	return res.Response.IsAllowed == 1, nil
 }
