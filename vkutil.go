@@ -22,15 +22,21 @@ type Api struct {
 	StdinAllow bool
 	debug      bool
 	*structs.API
+
+	Pools *poolsClient
 }
 
 func New(opts ...Opt) *Api {
 	va := new(vk.Api)
-	a := &Api{VkApi: va, API: &structs.API{VkAPI: va}}
+	a := &Api{
+		VkApi: va, API: &structs.API{VkAPI: va}
+	}
 
 	for _, opt := range opts {
 		opt(a)
 	}
+
+	a.Pools = newPoolsClient(a)
 
 	return a
 }

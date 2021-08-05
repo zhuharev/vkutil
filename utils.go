@@ -41,6 +41,14 @@ func arrIntToStr(arr []int) (sarr []string) {
 	return util.ArrIntToStr(arr)
 }
 
+func arrIntToString(arr []int) string {
+	return strings.Join(arrIntToStr(arr), ",")
+}
+
+func toString(i int) string {
+	return strconv.Itoa(i)
+}
+
 func arrStrToInt(arr []string) (iarr []int) {
 	for _, v := range arr {
 		i, _ := strconv.Atoi(v)
@@ -144,4 +152,21 @@ func ParseBoardURL(uri string) (groupID, topicID, postID int, err error) {
 // IsZeroOfUnderlyingType check is x zero value
 func IsZeroOfUnderlyingType(x interface{}) bool {
 	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
+}
+
+// add b to a
+func joinMaps(a, b map[int][]int) map[int][]int {
+	// create new map
+	m := make(map[int][]int)
+
+	// copy a to m
+	for k, arr := range a {
+		m[k] = arr
+	}
+
+	for k, arr := range b {
+		m[k] = append(m[k], arr...)
+	}
+
+	return m
 }
