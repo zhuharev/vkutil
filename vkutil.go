@@ -10,7 +10,6 @@ import (
 
 	"github.com/zhuharev/vk"
 	"github.com/zhuharev/vkutil/structs"
-	//log "gopkg.in/inconshreveable/log15.v2"
 )
 
 var (
@@ -29,7 +28,7 @@ type Api struct {
 func New(opts ...Opt) *Api {
 	va := new(vk.Api)
 	a := &Api{
-		VkApi: va, API: &structs.API{VkAPI: va}
+		VkApi: va, API: &structs.API{VkAPI: va},
 	}
 
 	for _, opt := range opts {

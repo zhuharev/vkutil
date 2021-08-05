@@ -49,16 +49,6 @@ func toString(i int) string {
 	return strconv.Itoa(i)
 }
 
-func arrStrToInt(arr []string) (iarr []int) {
-	for _, v := range arr {
-		i, _ := strconv.Atoi(v)
-		if i != 0 {
-			iarr = append(iarr, i)
-		}
-	}
-	return
-}
-
 func uniqStrArr(arr []string) []string {
 	var m = map[string]interface{}{}
 	for _, v := range arr {
@@ -79,10 +69,6 @@ func arrSplit1K(arr []int) (res [][]int) {
 	for i, v := range arr {
 		if i%700 == 0 {
 			res = append(res, []int{})
-			if i > 701 {
-				//fmt.Println(res[len(res)-2][0], res[len(res)-2][len(res[len(res)-2])-1])
-
-			}
 		}
 		res[len(res)-1] = append(res[len(res)-1], v)
 	}
@@ -101,12 +87,6 @@ func arrUniq(in []int) (out []int) {
 	}
 	sort.Ints(out)
 	return
-}
-
-func debug(f string, args ...interface{}) {
-	if DEBUG {
-		fmt.Printf(f+"\n", args...)
-	}
 }
 
 func setToUrlValues(key string, val interface{}, params ...url.Values) url.Values {

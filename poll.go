@@ -53,9 +53,7 @@ func (p *poolsClient) GetVoters(ctx context.Context, ownerID, pollID int, answer
 	m := make(map[int][]int)
 
 	for _, r := range res.Response {
-		for _, id := range r.Users.Items {
-			m[r.AnswerID] = append(m[r.AnswerID], id)
-		}
+		m[r.AnswerID] = append(m[r.AnswerID], r.Users.Items...)
 	}
 
 	return m, nil

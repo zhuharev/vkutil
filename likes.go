@@ -134,9 +134,11 @@ return a;`
 		return
 	}
 	if resp.Error.Msg != "" {
-		e = errors.New(resp.Error.Msg)
+		err = errors.New(resp.Error.Msg)
+
 		return
 	}
+
 	return resp.Resp.Count, resp.Resp.Items, nil
 }
 
@@ -144,7 +146,7 @@ func (api *Api) LikesGetAll(likeType ObjectType, ownerId, itemId int,
 	args ...url.Values) (likes []int, e error) {
 
 	i := 0
-	tmplikes := []int{}
+	var tmplikes []int
 	cnt, likes, e := api.Get25KLikes(likeType, ownerId, itemId, i, args...)
 	if e != nil {
 		return

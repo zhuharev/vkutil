@@ -191,17 +191,17 @@ func (api *Api) UsersGet(idsi interface{}, args ...url.Values) (res []User, e er
 	var (
 		ids []string
 	)
-	switch idsi.(type) {
+	switch idsi := idsi.(type) {
 	case []string:
-		ids = idsi.([]string)
+		ids = idsi
 	case []int:
-		ids = arrIntToStr(idsi.([]int))
+		ids = arrIntToStr(idsi)
 	case int:
-		ids = []string{fmt.Sprint(idsi.(int))}
+		ids = []string{fmt.Sprint(idsi)}
 	case int64:
-		ids = []string{fmt.Sprint(idsi.(int64))}
+		ids = []string{fmt.Sprint(idsi)}
 	case map[int]struct{}:
-		for k := range idsi.(map[int]struct{}) {
+		for k := range idsi {
 			ids = append(ids, fmt.Sprint(k))
 		}
 	default:
