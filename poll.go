@@ -44,7 +44,7 @@ func (p *poolsClient) GetVoters(ctx context.Context, ownerID, pollID int, answer
 
 	var res PollVoters
 
-	err := p.client.VkApi.RequestTypedContext(ctx, vk.MethodPoolsGetByID, params, &res)
+	err := p.client.VkApi.RequestTypedContext(ctx, vk.MethodPoolsGetVoters, params, &res)
 	if err != nil {
 		return nil, err
 	}
