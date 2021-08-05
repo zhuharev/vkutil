@@ -12,6 +12,8 @@ github.com/ungerik/go-dry v0.0.0-20210209114055-a3e162a9e62e h1:1oi3J06qNU9zsDsX
 github.com/ungerik/go-dry v0.0.0-20210209114055-a3e162a9e62e/go.mod h1:g61b/Pvp64yQ4oYVbcdA7qqzn1RcQIHZQuhWOVG1VHk=
 github.com/zhuharev/vk v1.0.0 h1:qZQqK2iicHWhMRJeeh72BybG8PM5MRJU8w3O2V9z5Cg=
 github.com/zhuharev/vk v1.0.0/go.mod h1:JtDVJj0UCBNRAEcOV5k5erxUjALSWexp5vblOQnkf7o=
+github.com/zhuharev/vk v1.0.1 h1://ehvxv26iEy+t2s4M4Hw+JJgbIAyrmsr02mbsH8xJE=
+github.com/zhuharev/vk v1.0.1/go.mod h1:JtDVJj0UCBNRAEcOV5k5erxUjALSWexp5vblOQnkf7o=
 golang.org/x/net v0.0.0-20180218175443-cbe0f9307d01/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20210614182718-04defd469f4e/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985 h1:4CSI6oo7cOjJKajidEljs9h+uP0rRZBPPPhcCbj5mw8=
