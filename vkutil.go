@@ -89,15 +89,19 @@ func (api *Api) UserByCode(redirectURI, code string) (*User, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	var at struct {
-		AccessToken string `json:"access_token"`
-		UserID      int    `json:"user_id"`
+		AccessToken      string `json:"access_token"`
+		UserID           int    `json:"user_id"`
+		Error            string
+		ErrorDescription string `json:"error_description"`
 	}
 
 	bts, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	if api.debug {
 		log.Printf("response access token url: %s", bts)
 	}
@@ -105,6 +109,10 @@ func (api *Api) UserByCode(redirectURI, code string) (*User, error) {
 	err = json.Unmarshal(bts, &at)
 	if err != nil {
 		return nil, err
+	}
+
+	if at.Error != "" {
+		return nil, fmt.Errorf("err get access token: %s (%s)", at.Error, at.ErrorDescription)
 	}
 
 	if at.UserID == 0 {
